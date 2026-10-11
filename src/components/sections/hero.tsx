@@ -1,37 +1,86 @@
-import { getHeroSlides } from "@/lib/queries/hero-slides";
-import { HeroCarousel } from "@/components/sections/hero-carousel";
+import Link from "next/link";
+import { getBrands, getFeaturedProducts } from "@/lib/queries/products";
+import { getSiteSettings } from "@/lib/queries/settings";
 import { HeroCopy } from "@/components/sections/hero-copy";
+import { ProductPhoto } from "@/components/ui/product-photo";
+import { Price } from "@/components/currency/price";
 
 /**
- * Catalogue-cover hero: rotating product photography, warm scrim,
- * oversized display type, and a spec rail at the base.
+ * Ink hero: display type on the left, a loose stack of in-stock cans on the
+ * right, and a spec rail at the base. Packshots sit on white tiles because
+ * half the catalogue photography has a white (not transparent) background.
  */
-
-const STATS = [
-  { label: "Manufacturing", value: "15", unit: "yrs" },
-  { label: "Units delivered", value: "12,000", unit: "+" },
-  { label: "States served", value: "48", unit: "" },
-  { label: "Vinyl grade", value: "18", unit: "oz" },
-];
-
 export async function Hero() {
-  const slides = await getHeroSlides();
+  const [brands, featured, settings] = await Promise.all([
+    getBrands(),
+    getFeaturedProducts(4),
+    getSiteSettings(),
+  ]);
+  const productCount = brands.reduce((sum, b) => sum + (b.product_count ?? 0), 0);
+
+  const stats: { label: string; value: React.ReactNode; unit?: string }[] = [
+    { label: "Brands", value: brands.length || "30", unit: "+" },
+    { label: "Products", value: productCount || "490", unit: "" },
+    { label: "Delivering to", value: "AU · NZ" },
+    {
+      label: "Free shipping from",
+      value:
+        settings.free_shipping_threshold > 0 ? (
+          <Price amount={settings.free_shipping_threshold} />
+        ) : (
+          "Always"
+        ),
+    },
+  ];
 
   return (
-    <section className="relative isolate min-h-[480px] overflow-hidden bg-slate-900 sm:min-h-[520px] lg:min-h-[580px]">
-      <HeroCarousel slides={slides} />
+    <section className="relative isolate overflow-hidden bg-slate-900">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(60rem 36rem at 85% 10%, rgba(19,128,108,0.42), transparent 60%), radial-gradient(40rem 30rem at 0% 100%, rgba(19,128,108,0.16), transparent 60%)",
+        }}
+      />
 
-      {/* Scrim. Left-heavy so copy stays readable while the carousel shows through on the right. */}
-      <div className="pointer-events-none absolute inset-0 bg-slate-900/55 sm:bg-slate-900/45" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/85 to-slate-900/15" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
+      <div className="container-wide grid items-center gap-10 pb-12 pt-14 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:pb-16 lg:pt-20">
+        <div className="lg:col-span-7">
+          <HeroCopy />
+        </div>
 
-      <HeroCopy />
+        {featured.length > 0 && (
+          <div className="lg:col-span-5">
+            <div className="mx-auto grid max-w-md grid-cols-2 gap-3 sm:gap-4 lg:max-w-none">
+              {featured.slice(0, 4).map((product, i) => (
+                <Link
+                  key={product.id}
+                  href={`/product/${product.slug}`}
+                  className={[
+                    "group relative block overflow-hidden rounded-2xl bg-white shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition-transform duration-300 hover:-translate-y-1",
+                    i % 2 === 1 ? "translate-y-6" : "",
+                  ].join(" ")}
+                  style={{ aspectRatio: "1 / 1" }}
+                >
+                  <ProductPhoto
+                    src={product.images[0]?.url}
+                    alt={product.images[0]?.alt || product.name}
+                    name={product.name}
+                    priority
+                  />
+                  <span className="spec absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent px-3 pb-2.5 pt-6 text-[0.625rem] tracking-[0.08em] text-slate-600">
+                    {product.brand_name} · {product.strength_mg}mg
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
-      <div className="relative border-t border-white/12 bg-slate-900/35 backdrop-blur-[2px]">
+      <div className="relative border-t border-white/12 bg-slate-900/35">
         <div className="container-wide">
           <dl className="grid grid-cols-2 sm:grid-cols-4">
-            {STATS.map((stat, i) => (
+            {stats.map((stat, i) => (
               <div
                 key={stat.label}
                 className={[
@@ -45,12 +94,10 @@ export async function Hero() {
                 <dt className="spec text-[0.625rem] uppercase tracking-[0.18em] text-white/45">
                   {stat.label}
                 </dt>
-                <dd className="mt-2 font-display display-wide text-3xl font-extrabold leading-none text-white sm:text-4xl">
+                <dd className="mt-2 font-display display-wide text-2xl font-extrabold leading-none text-white sm:text-3xl">
                   {stat.value}
                   {stat.unit && (
-                    <span className="ml-1 text-lg font-medium text-orange-400">
-                      {stat.unit}
-                    </span>
+                    <span className="ml-0.5 text-lg font-medium text-orange-400">{stat.unit}</span>
                   )}
                 </dd>
               </div>

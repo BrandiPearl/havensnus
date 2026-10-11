@@ -3,7 +3,7 @@ import { CartView } from "@/components/cart/cart-view";
 
 export const metadata: Metadata = {
   title: "Cart",
-  description: "Review the commercial inflatables in your cart before checkout.",
+  description: "Review your cart before checkout.",
   robots: { index: false, follow: false },
 };
 

@@ -1,5 +1,4 @@
 import type { Testimonial } from "@/types";
-import { TESTIMONIALS } from "@/lib/data/mock-products";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 function mapRow(row: Record<string, unknown>): Testimonial {
@@ -9,14 +8,14 @@ function mapRow(row: Record<string, unknown>): Testimonial {
     location: String(row.location ?? ""),
     rating: Number(row.rating ?? 5),
     review: String(row.review ?? ""),
-    event_type: String(row.event_type ?? ""),
+    product: String(row.product ?? ""),
     avatar: row.avatar_url ? String(row.avatar_url) : undefined,
     date: String(row.date ?? row.created_at ?? ""),
   };
 }
 
 export async function getTestimonials(limit = 8): Promise<Testimonial[]> {
-  if (!isSupabaseConfigured()) return TESTIMONIALS.slice(0, limit);
+  if (!isSupabaseConfigured()) return [];
 
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
@@ -31,9 +30,7 @@ export async function getTestimonials(limit = 8): Promise<Testimonial[]> {
 
   if (error) {
     console.error("getTestimonials:", error.message);
-    return TESTIMONIALS.slice(0, limit);
+    return [];
   }
-
-  const rows = (data ?? []).map(mapRow);
-  return rows.length > 0 ? rows : TESTIMONIALS.slice(0, limit);
+  return (data ?? []).map(mapRow);
 }

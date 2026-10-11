@@ -16,19 +16,19 @@ export default function CheckoutSuccessPage() {
         <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-5 mx-auto">
           <CheckCircle2 className="w-7 h-7 text-emerald-500" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Order request received</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Thanks, your order is in</h1>
         <Suspense>
           <CheckoutSuccess />
         </Suspense>
         <p className="mt-3 text-slate-500 text-sm">
-          We emailed you a confirmation. Next we will review availability and freight, then follow up with payment terms. Most orders get a reply within 2 business hours.
+          We have emailed you a confirmation. Payment details follow shortly, and your order ships with tracking as soon as payment is received.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/products" className="btn-primary text-sm py-2.5 px-5">
             Continue shopping
           </Link>
           <Link href="/contact" className="btn-secondary text-sm py-2.5 px-5">
-            Contact sales
+            Contact us
           </Link>
         </div>
       </div>

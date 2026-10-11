@@ -2,13 +2,13 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { saveProduct, deleteProduct } from "@/app/(cms)/admin/actions";
-import { PRODUCT_CATEGORIES } from "@/lib/cms/constants";
+import { FLAVOUR_FAMILIES, POUCH_FORMATS, STRENGTH_LEVELS } from "@/lib/cms/constants";
 import type { ActionState } from "@/lib/cms/form";
-import type { AdminProduct } from "@/lib/queries/cms";
+import type { AdminBrand, AdminProduct } from "@/lib/queries/cms";
 import { slugify } from "@/lib/utils";
 import { FormAlert } from "@/components/cms/form-alert";
 
-export function ProductForm({ product }: { product?: AdminProduct }) {
+export function ProductForm({ product, brands }: { product?: AdminProduct; brands: AdminBrand[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveProduct, null);
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
@@ -38,19 +38,20 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           <Field label="SKU">
             <input name="sku" className="input font-mono text-xs" defaultValue={product?.sku} placeholder="Auto from slug if empty" />
           </Field>
-          <Field label="Category">
-            <select name="category" className="input" defaultValue={product?.category ?? "other"}>
-              {PRODUCT_CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
+          <Field label="Brand">
+            <select name="brand" className="input" defaultValue={product?.brand ?? ""}>
+              <option value="">No brand</option>
+              {brands.map((brand) => (
+                <option key={brand.slug} value={brand.slug}>
+                  {brand.name}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Price">
+          <Field label="Price per can (AUD)">
             <input name="price" type="number" min="0" step="0.01" className="input" required defaultValue={product?.price ?? ""} />
           </Field>
-          <Field label="Compare-at price">
+          <Field label="Was price (shows as sale)">
             <input
               name="compare_at_price"
               type="number"
@@ -64,8 +65,8 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
         <Field label="Short description">
           <textarea name="short_description" className="input min-h-20" rows={3} defaultValue={product?.short_description} />
         </Field>
-        <Field label="Description">
-          <textarea name="description" className="input min-h-40" rows={8} defaultValue={product?.description} />
+        <Field label="Description (HTML: p, h3, ul, li, strong)">
+          <textarea name="description" className="input min-h-40 font-mono text-xs" rows={10} defaultValue={product?.description} />
         </Field>
       </section>
 
@@ -88,18 +89,32 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold text-slate-900">Specs</h2>
+        <h2 className="text-sm font-bold text-slate-900">Pouch details</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Field label="Length"><input name="spec_length" className="input" defaultValue={product?.spec_length} /></Field>
-          <Field label="Width"><input name="spec_width" className="input" defaultValue={product?.spec_width} /></Field>
-          <Field label="Height"><input name="spec_height" className="input" defaultValue={product?.spec_height} /></Field>
-          <Field label="Weight"><input name="spec_weight" className="input" defaultValue={product?.spec_weight} /></Field>
-          <Field label="Capacity"><input name="spec_capacity" className="input" defaultValue={product?.spec_capacity} /></Field>
-          <Field label="Blower"><input name="spec_blower" className="input" defaultValue={product?.spec_blower} /></Field>
-          <Field label="Material"><input name="spec_material" className="input" defaultValue={product?.spec_material} /></Field>
-          <Field label="Setup time"><input name="spec_setup_time" className="input" defaultValue={product?.spec_setup_time} /></Field>
-          <Field label="Age range"><input name="spec_age_range" className="input" defaultValue={product?.spec_age_range} /></Field>
-          <Field label="Outlet"><input name="spec_outlet" className="input" defaultValue={product?.spec_outlet} /></Field>
+          <Field label="Nicotine (mg per pouch)">
+            <input name="strength_mg" type="number" min="0" step="0.1" className="input" defaultValue={product?.strength_mg ?? ""} />
+          </Field>
+          <Field label="Strength level">
+            <Select name="strength_level" options={STRENGTH_LEVELS} value={product?.strength_level} />
+          </Field>
+          <Field label="Pouches per can">
+            <input name="pouches_per_tin" type="number" min="0" step="1" className="input" defaultValue={product?.pouches_per_tin ?? ""} />
+          </Field>
+          <Field label="Flavour">
+            <input name="flavour" className="input" placeholder="e.g. Cool Mint" defaultValue={product?.flavour} />
+          </Field>
+          <Field label="Flavour family">
+            <Select name="flavour_family" options={FLAVOUR_FAMILIES} value={product?.flavour_family} />
+          </Field>
+          <Field label="Pouch format">
+            <Select name="pouch_format" options={POUCH_FORMATS} value={product?.pouch_format} />
+          </Field>
+          <Field label="Product line">
+            <input name="product_line" className="input" placeholder="e.g. ZYN Slim" defaultValue={product?.product_line} />
+          </Field>
+          <Field label="Stock quantity">
+            <input name="stock_quantity" type="number" min="0" step="1" className="input" defaultValue={product?.stock_quantity ?? ""} />
+          </Field>
         </div>
       </section>
 
@@ -110,8 +125,6 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           <Check name="in_stock" label="In stock" defaultChecked={product?.in_stock ?? true} />
           <Check name="is_featured" label="Featured" defaultChecked={product?.is_featured} />
           <Check name="is_new" label="New" defaultChecked={product?.is_new} />
-          <Check name="rental_available" label="Rental available" defaultChecked={product?.rental_available ?? true} />
-          <Check name="purchase_available" label="Purchase available" defaultChecked={product?.purchase_available ?? true} />
         </div>
         <Field label="SEO title">
           <input name="seo_title" className="input" defaultValue={product?.seo_title} />
@@ -156,5 +169,20 @@ function Check({ name, label, defaultChecked }: { name: string; label: string; d
       <input type="checkbox" name={name} defaultChecked={defaultChecked} className="rounded border-slate-300" />
       {label}
     </label>
+  );
+}
+
+/** Keeps a legacy value selectable even if it is not in the preset list. */
+function Select({ name, options, value }: { name: string; options: readonly string[]; value?: string }) {
+  const all = value && !options.includes(value) ? [value, ...options] : options;
+  return (
+    <select name={name} className="input" defaultValue={value ?? ""}>
+      <option value="">Not set</option>
+      {all.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
   );
 }

@@ -45,7 +45,7 @@ export function LoginPageClient() {
             <div className="mb-5 flex justify-center">
               <Logo variant="light" size="sm" href="/" />
             </div>
-            <h1 className="font-display text-xl font-bold text-white">Wonderland CMS</h1>
+            <h1 className="font-display text-xl font-bold text-white">Haven Snus CMS</h1>
             <p className="mt-2 text-sm text-slate-400">
               Sign in to manage products, blog posts, and customer inquiries.
             </p>

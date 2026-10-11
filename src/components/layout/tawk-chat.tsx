@@ -2,9 +2,11 @@
 
 import Script from "next/script";
 
-const TAWK_SRC = "https://embed.tawk.to/6a85c6b2ae3056344ea6ff6d/1k0d90b14";
+// Set NEXT_PUBLIC_TAWK_SRC to the embed URL of the Haven Snus Tawk.to property to turn chat on.
+const TAWK_SRC = process.env.NEXT_PUBLIC_TAWK_SRC;
 
 export function TawkChat() {
+  if (!TAWK_SRC) return null;
   return (
     <Script id="tawk-to" strategy="lazyOnload">
       {`

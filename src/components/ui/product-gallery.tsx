@@ -8,16 +8,10 @@ import { ProductPhoto } from "./product-photo";
 interface ProductGalleryProps {
   images: ProductImage[];
   name: string;
-  category: string;
   isNew?: boolean;
 }
 
-export function ProductGallery({
-  images,
-  name,
-  category,
-  isNew = false,
-}: ProductGalleryProps) {
+export function ProductGallery({ images, name, isNew = false }: ProductGalleryProps) {
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0];
   const thumbs = images.slice(0, 8);
@@ -25,22 +19,19 @@ export function ProductGallery({
   return (
     <div className="space-y-3">
       <div
-        className="relative w-full overflow-hidden rounded-2xl bg-slate-100"
-        style={{ aspectRatio: "4 / 3" }}
+        className="relative w-full overflow-hidden rounded-2xl border border-slate-200"
+        style={{ aspectRatio: "1 / 1" }}
       >
         <ProductPhoto
           key={current?.url ?? "empty"}
           src={current?.url}
-          alt={current?.alt ?? name}
+          alt={current?.alt || name}
           name={name}
-          category={category}
           priority
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          className="object-cover"
         />
         {isNew && (
           <div className="absolute top-4 left-4">
-            <span className="badge-orange">New Arrival</span>
+            <span className="badge-orange">New</span>
           </div>
         )}
       </div>
@@ -54,20 +45,11 @@ export function ProductGallery({
               onClick={() => setActive(i)}
               aria-label={`View photo ${i + 1}`}
               className={cn(
-                "relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100 border-2 transition-colors",
-                i === active
-                  ? "border-orange-500"
-                  : "border-slate-200 hover:border-orange-300"
+                "relative aspect-square w-full overflow-hidden rounded-lg border-2 transition-colors",
+                i === active ? "border-orange-500" : "border-slate-200 hover:border-orange-300"
               )}
             >
-              <ProductPhoto
-                src={img.url}
-                alt={img.alt || `${name} photo ${i + 1}`}
-                name={name}
-                category={category}
-                sizes="120px"
-                className="object-cover"
-              />
+              <ProductPhoto src={img.url} alt={img.alt || `${name} photo ${i + 1}`} name={name} />
             </button>
           ))}
         </div>

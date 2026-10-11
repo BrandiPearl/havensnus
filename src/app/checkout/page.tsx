@@ -3,7 +3,7 @@ import { CheckoutForm } from "@/components/cart/checkout-form";
 
 export const metadata: Metadata = {
   title: "Checkout",
-  description: "Submit your inflatable order. We confirm freight and payment terms before you pay.",
+  description: "Check out your Haven Snus order.",
   robots: { index: false, follow: false },
 };
 
@@ -13,7 +13,7 @@ export default function CheckoutPage() {
       <div className="container-wide py-10 lg:py-14">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Checkout</h1>
         <p className="text-sm text-slate-500 mb-6 max-w-xl">
-          Send your unit list and shipping details. A product specialist will confirm availability, freight, and payment terms.
+          Enter your delivery details. We will email payment instructions, then ship your order with tracking.
         </p>
         <CheckoutForm />
       </div>

@@ -4,27 +4,10 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-      {
-        protocol: "https",
-        hostname: "ultimatejumpers.com",
-      },
-      {
-        protocol: "https",
-        hostname: "www.jumporange.com",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
-      },
-      {
-        protocol: "https",
-        hostname: "jumporange.com",
-      },
+      // Product images in Cloudflare R2 (public r2.dev bucket or a custom CDN domain).
+      { protocol: "https", hostname: "*.r2.dev" },
+      { protocol: "https", hostname: "*.havensnus.com" },
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },
   async redirects() {

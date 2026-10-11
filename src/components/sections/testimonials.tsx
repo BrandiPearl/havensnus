@@ -11,6 +11,7 @@ export async function Testimonials() {
   if (testimonials.length === 0) return null;
 
   const [lead, ...rest] = testimonials;
+  const average = testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length;
 
   return (
     <section className="section-block bg-slate-900">
@@ -19,7 +20,7 @@ export async function Testimonials() {
           <div>
             <p className="eyebrow !text-orange-400">Customer reviews</p>
             <h2 className="section-heading !text-white">
-              Trusted by operators nationwide
+              What our customers say
             </h2>
           </div>
 
@@ -29,8 +30,8 @@ export async function Testimonials() {
                 <Star key={s} className="h-4 w-4 fill-orange-500 text-orange-500" />
               ))}
             </div>
-            <span className="spec text-sm text-white">4.9</span>
-            <span className="spec text-xs text-white/45">2,400+ reviews</span>
+            <span className="spec text-sm text-white">{average.toFixed(1)}</span>
+            <span className="spec text-xs text-white/45">{testimonials.length} recent reviews</span>
           </div>
         </div>
 
@@ -41,7 +42,7 @@ export async function Testimonials() {
           <figcaption className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="text-sm font-semibold text-white">{lead.name}</span>
             <span className="spec text-xs text-white/45">
-              {lead.event_type} · {lead.location}
+              {[lead.product, lead.location].filter(Boolean).join(" · ")}
             </span>
           </figcaption>
         </figure>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Product } from "@/types";
 import { ProductPhoto } from "./product-photo";
-import { isUsableProductImage } from "@/lib/product-image";
+import { StrengthDots } from "./strength-dots";
 import { Price } from "@/components/currency/price";
 
 interface ProductCardProps {
@@ -11,72 +11,61 @@ interface ProductCardProps {
   priority?: boolean;
 }
 
-/**
- * A catalogue line item rather than a marketing tile: photograph, ruled
- * separator, then the commercial detail. The circular accent arrow button
- * that used to sit in the corner has gone — the whole card is the target.
- */
+/** Packshot on white, then brand, name, strength scale and price per can. */
 export function ProductCard({ product, priority = false }: ProductCardProps) {
-  const primaryImage =
-    product.images.find((i) => i.is_primary && isUsableProductImage(i.url)) ??
-    product.images.find((i) => isUsableProductImage(i.url));
-
-  const hasDiscount =
-    product.compare_at_price && product.compare_at_price > product.price;
-  const discountPct = hasDiscount
-    ? Math.round(
-        ((product.compare_at_price! - product.price) / product.compare_at_price!) * 100
-      )
-    : 0;
+  const image = product.images[0];
+  const hasDiscount = Boolean(
+    product.compare_at_price && product.compare_at_price > product.price
+  );
 
   return (
     <Link href={`/product/${product.slug}`} className="card-product group">
-      <div
-        className="relative w-full shrink-0 overflow-hidden bg-slate-100"
-        style={{ aspectRatio: "4 / 3" }}
-      >
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
         <ProductPhoto
-          src={primaryImage?.url}
-          alt={primaryImage?.alt ?? product.name}
+          src={image?.url}
+          alt={image?.alt || product.name}
           name={product.name}
-          category={product.category}
           priority={priority}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover object-center transition-transform duration-[700ms] ease-out group-hover:scale-[1.04]"
+          className="transition-transform duration-[600ms] ease-out group-hover:scale-[1.05]"
         />
 
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
           {product.is_new && <span className="badge-orange">New</span>}
-          {hasDiscount && <span className="badge-red">&minus;{discountPct}%</span>}
-          {!product.in_stock && <span className="badge-slate">Backordered</span>}
+          {!product.in_stock && <span className="badge-slate">Sold out</span>}
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="spec text-[0.625rem] uppercase tracking-[0.16em] text-slate-500">
-          {product.category.replace(/-/g, " ")}
+      <div className="flex flex-1 flex-col border-t border-slate-200 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="spec truncate text-[0.625rem] uppercase tracking-[0.16em] text-slate-500">
+            {product.brand_name ?? product.brand}
+          </span>
+          {product.strength_mg != null && (
+            <span className="spec shrink-0 text-[0.6875rem] font-medium text-slate-700">
+              {product.strength_mg}mg
+            </span>
+          )}
         </div>
 
-        <h3 className="mt-2 font-display text-[0.9375rem] font-bold leading-snug tracking-tight text-slate-900 line-clamp-2 transition-colors group-hover:text-orange-700">
-          {product.name}
+        <h3 className="mt-1.5 font-display text-[0.9375rem] font-bold leading-snug tracking-tight text-slate-900 line-clamp-2 transition-colors group-hover:text-orange-700">
+          {product.flavour ?? product.name}
         </h3>
-
-        {product.specs.height && (
-          <p className="spec mt-1.5 text-xs text-slate-500">
-            {product.specs.height} tall
-          </p>
+        {product.flavour && (
+          <p className="mt-0.5 truncate text-xs text-slate-500">{product.product_line ?? product.name}</p>
         )}
 
-        <div className="mt-auto pt-5">
-          <div className="flex items-end justify-between gap-3 border-t border-slate-200 pt-4">
-            <div className="text-lg font-bold tabular text-slate-900 font-display">
+        <div className="mt-auto pt-4">
+          <StrengthDots level={product.strength_level} />
+          <div className="mt-3 flex items-baseline gap-2 border-t border-slate-200 pt-3">
+            <span className="font-display text-lg font-bold tabular text-slate-900">
               <Price amount={product.price} />
-            </div>
+            </span>
             {hasDiscount && (
-              <div className="spec text-xs text-slate-400 line-through">
+              <span className="spec text-xs text-slate-400">
                 <Price amount={product.compare_at_price!} original />
-              </div>
+              </span>
             )}
+            <span className="ml-auto hidden text-[0.6875rem] text-slate-400 sm:inline">per can</span>
           </div>
         </div>
       </div>

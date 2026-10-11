@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSiteSettings } from "@/lib/queries/settings";
+import { getNavBrands } from "@/lib/queries/products";
 import { getRequestCurrencyHint } from "@/lib/request-currency";
+import { AGE_COOKIE } from "@/lib/age-gate";
+import { SITE_URL } from "@/lib/site";
 
 // Body copy. Deliberately invisible — it carries the reading, not the voice.
 const inter = Inter({
@@ -12,8 +16,7 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// Display. The `wdth` axis is the point: headlines are set slightly extended,
-// which is what gives them the confident, catalogue-cover weight.
+// Display. The `wdth` axis is the point: headlines are set slightly extended.
 const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
@@ -22,8 +25,7 @@ const archivo = Archivo({
   axes: ["wdth"],
 });
 
-// Specs, dimensions, SKUs and stat figures. Equipment buyers read numbers,
-// and numbers set in mono read as measured rather than marketed.
+// Strengths, prices and SKUs. Numbers set in mono read as measured.
 const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
@@ -32,48 +34,39 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://wonderlandinflatables.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Wonderland Inflatables | Commercial Bounce Houses & Water Slides",
-    template: "%s | Wonderland Inflatables",
+    default: "Haven Snus | Nicotine Pouches Delivered Across Australia & New Zealand",
+    template: "%s | Haven Snus",
   },
   description:
-    "Commercial grade bounce houses, water slides, obstacle courses, and combos for rental businesses and large events. Built to last. Ships nationwide.",
+    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Every strength and flavour, with tracked delivery across Australia and New Zealand.",
   keywords: [
-    "commercial bounce houses",
-    "inflatable water slides for sale",
-    "inflatable rental business",
-    "obstacle courses for sale",
-    "bounce house manufacturer",
-    "commercial inflatables",
-    "party inflatables",
-    "inflatable combos",
+    "nicotine pouches australia",
+    "nicotine pouches nz",
+    "buy zyn australia",
+    "velo nicotine pouches",
+    "snus australia",
+    "tobacco free nicotine pouches",
   ],
-  authors: [{ name: "Wonderland Inflatables" }],
-  creator: "Wonderland Inflatables",
-  publisher: "Wonderland Inflatables",
+  authors: [{ name: "Haven Snus" }],
+  creator: "Haven Snus",
+  publisher: "Haven Snus",
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    locale: "en_US",
-    url: "https://wonderlandinflatables.com",
-    siteName: "Wonderland Inflatables",
-    title: "Wonderland Inflatables | Commercial Bounce Houses & Water Slides",
-    description:
-      "Commercial grade inflatables for rental businesses and large events. Ships nationwide.",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Wonderland Inflatables",
-      },
-    ],
+    locale: "en_AU",
+    url: SITE_URL,
+    siteName: "Haven Snus",
+    title: "Haven Snus | Nicotine Pouches for Australia & New Zealand",
+    description: "30+ brands of tobacco-free nicotine pouches with tracked AU & NZ delivery.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Haven Snus" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Wonderland Inflatables",
-    description: "Commercial grade inflatables for rental businesses and large events.",
-    images: ["/og-image.jpg"],
+    title: "Haven Snus",
+    description: "30+ brands of tobacco-free nicotine pouches with tracked AU & NZ delivery.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -85,17 +78,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "your-google-verification-code",
-  },
-  icons: {
-    icon: [
-      { url: "/icon", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
-  },
 };
 
 export default async function RootLayout({
@@ -103,18 +85,22 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, hint] = await Promise.all([getSiteSettings(), getRequestCurrencyHint()]);
+  const [settings, hint, store, navBrands] = await Promise.all([
+    getSiteSettings(),
+    getRequestCurrencyHint(),
+    cookies(),
+    getNavBrands(),
+  ]);
 
   return (
-    <html lang="en" className={`${inter.variable} ${archivo.variable} ${jetbrains.variable}`}>
-      <head>
-        <link rel="canonical" href="https://wonderlandinflatables.com" />
-      </head>
+    <html lang="en-AU" className={`${inter.variable} ${archivo.variable} ${jetbrains.variable}`}>
       <body className="font-sans antialiased bg-white text-slate-900">
         <AppShell
           settings={settings}
           initialCountry={hint.country}
-          initialCurrency={hint.cookieCurrency || (hint.country ? hint.detectedCurrency : "")}
+          initialCurrency={hint.cookieCurrency || hint.detectedCurrency}
+          ageVerified={store.get(AGE_COOKIE)?.value === "1"}
+          navBrands={navBrands}
         >
           {children}
         </AppShell>

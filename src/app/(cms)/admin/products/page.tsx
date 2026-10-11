@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageHeader } from "@/components/cms/admin-page-header";
-import { getAdminProducts } from "@/lib/queries/cms";
+import { getAdminBrands, getAdminProducts } from "@/lib/queries/cms";
 import { ProductsTable } from "@/components/cms/products-table";
 
 export const metadata: Metadata = { title: "Products" };
 
 export default async function AdminProductsPage() {
-  const products = await getAdminProducts();
+  const [products, brands] = await Promise.all([getAdminProducts(), getAdminBrands()]);
 
   return (
     <div>
       <AdminPageHeader
         title="Products"
-        description={`${products.length} products in your catalog`}
+        description={`${products.length} products in your catalogue`}
         actions={
           <Link href="/admin/products/new" className="btn-primary text-sm py-2 px-4">
             <Plus className="w-4 h-4" />
@@ -22,7 +22,7 @@ export default async function AdminProductsPage() {
           </Link>
         }
       />
-      <ProductsTable products={products} />
+      <ProductsTable products={products} brands={brands} />
     </div>
   );
 }

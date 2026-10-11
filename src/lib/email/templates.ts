@@ -1,4 +1,6 @@
 import { emailShell } from "@/lib/email/mailer";
+import { formatAud } from "@/lib/utils";
+import { absoluteUrl } from "@/lib/site";
 
 function escapeHtml(value: string) {
   return value
@@ -15,104 +17,94 @@ function rows(lines: string[]) {
     .join("");
 }
 
-export function orderCustomerEmail(data: {
-  name: string;
+export type OrderEmailData = {
   reference: string;
-  items: string[];
-  subtotalUsd: string;
-  localTotal?: string;
-  address: string;
-}) {
-  const body = `
-    <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.name)},</p>
-    <p style="margin:0 0 12px;font-size:14px;">We received your order request <strong>${escapeHtml(data.reference)}</strong>. A specialist will confirm availability, freight, and payment terms by email.</p>
-    ${rows(data.items)}
-    <p style="margin:12px 0 0;font-size:14px;"><strong>Subtotal (USD):</strong> ${escapeHtml(data.subtotalUsd)}</p>
-    ${data.localTotal ? `<p style="margin:4px 0 0;font-size:13px;color:#475569;">About ${escapeHtml(data.localTotal)} in your local currency.</p>` : ""}
-    <p style="margin:12px 0 0;font-size:14px;"><strong>Ship to:</strong> ${escapeHtml(data.address)}</p>
-  `;
-  return {
-    subject: `Order ${data.reference} received · Wonderland Inflatables`,
-    html: emailShell("Order request received", body),
-    text: `Hi ${data.name},\n\nWe received order ${data.reference}.\n\n${data.items.join("\n")}\nSubtotal (USD): ${data.subtotalUsd}\nShip to: ${data.address}\n`,
-  };
-}
-
-export function orderStaffEmail(data: {
-  reference: string;
+  firstName: string;
   name: string;
   email: string;
   phone: string;
-  items: string[];
-  subtotalUsd: string;
   address: string;
+  country: "AU" | "NZ";
+  items: { name: string; sku: string; qty: number; price: number }[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  displayTotal?: string;
   notes?: string;
-}) {
+};
+
+function itemsTable(data: OrderEmailData) {
+  const line = (label: string, value: string, bold = false) =>
+    `<tr><td style="padding:6px 0;font-size:14px;${bold ? "font-weight:700;" : "color:#4a5560;"}">${label}</td><td align="right" style="padding:6px 0;font-size:14px;${bold ? "font-weight:700;" : ""}">${value}</td></tr>`;
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:8px 0 4px;">
+      ${data.items
+        .map(
+          (item) =>
+            `<tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;font-size:14px;">${item.qty} × ${escapeHtml(item.name)}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;font-size:14px;white-space:nowrap;">${formatAud(item.price * item.qty)}</td></tr>`
+        )
+        .join("")}
+      ${line("Subtotal", formatAud(data.subtotal))}
+      ${line("Shipping", data.shipping === 0 ? "Free" : formatAud(data.shipping))}
+      ${line("Total (AUD)", formatAud(data.total), true)}
+    </table>`;
+}
+
+function itemsText(data: OrderEmailData) {
+  return [
+    ...data.items.map((i) => `${i.qty} x ${i.name} (${i.sku}) ${formatAud(i.price * i.qty)}`),
+    `Subtotal: ${formatAud(data.subtotal)}`,
+    `Shipping: ${data.shipping === 0 ? "Free" : formatAud(data.shipping)}`,
+    `Total (AUD): ${formatAud(data.total)}`,
+  ].join("\n");
+}
+
+export function orderCustomerEmail(data: OrderEmailData) {
+  const body = `
+    <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.firstName)},</p>
+    <p style="margin:0 0 12px;font-size:14px;">Thanks for your order <strong>${escapeHtml(data.reference)}</strong>. We will email your payment details shortly. Your order ships with tracking as soon as payment is received.</p>
+    ${itemsTable(data)}
+    ${data.country === "NZ" && data.displayTotal ? `<p style="margin:4px 0 0;font-size:13px;color:#4a5560;">About ${escapeHtml(data.displayTotal)} at today's rate. You are charged in AUD.</p>` : ""}
+    <p style="margin:16px 0 0;font-size:14px;"><strong>Ship to:</strong> ${escapeHtml(data.address)}</p>
+    <p style="margin:16px 0 0;font-size:13px;color:#4a5560;">Questions? Just reply to this email.</p>
+  `;
+  return {
+    subject: `Order ${data.reference} received · Haven Snus`,
+    html: emailShell("Thanks for your order", body),
+    text: `Hi ${data.firstName},\n\nThanks for your order ${data.reference}. We will email your payment details shortly, and your order ships with tracking once payment is received.\n\n${itemsText(data)}\n\nShip to: ${data.address}\n`,
+  };
+}
+
+export function orderStaffEmail(data: OrderEmailData) {
   const body = `
     ${rows([
       `Reference: ${data.reference}`,
       `Customer: ${data.name}`,
       `Email: ${data.email}`,
       `Phone: ${data.phone}`,
-      `Address: ${data.address}`,
-      `Subtotal (USD): ${data.subtotalUsd}`,
+      `Ship to: ${data.address}`,
     ])}
-    ${rows(data.items)}
+    ${itemsTable(data)}
     ${data.notes ? rows([`Notes: ${data.notes}`]) : ""}
+    <p style="margin:16px 0 0;font-size:14px;"><a href="${absoluteUrl("/admin/orders")}" style="color:#13806c;">Open orders in the CMS</a></p>
   `;
   return {
-    subject: `New order ${data.reference} from ${data.name}`,
-    html: emailShell("New website order", body),
-    text: `New order ${data.reference}\n${data.name} · ${data.email} · ${data.phone}\n${data.items.join("\n")}\n${data.subtotalUsd}\n${data.address}\n`,
-  };
-}
-
-export function quoteCustomerEmail(data: { name: string; eventType: string }) {
-  const body = `
-    <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.name)},</p>
-    <p style="margin:0;font-size:14px;">Thanks for requesting a quote${data.eventType ? ` for ${escapeHtml(data.eventType)}` : ""}. We typically reply within 2 business hours.</p>
-  `;
-  return {
-    subject: "We received your quote request · Wonderland Inflatables",
-    html: emailShell("Quote request received", body),
-    text: `Hi ${data.name},\n\nWe received your quote request and will reply within 2 business hours.\n`,
-  };
-}
-
-export function quoteStaffEmail(data: {
-  name: string;
-  email: string;
-  phone: string;
-  eventType: string;
-  city: string;
-  message: string;
-  products: string[];
-}) {
-  const body = rows([
-    `Customer: ${data.name}`,
-    `Email: ${data.email}`,
-    `Phone: ${data.phone}`,
-    `Type: ${data.eventType}`,
-    `Location: ${data.city}`,
-    ...data.products,
-    `Message: ${data.message}`,
-  ]);
-  return {
-    subject: `New quote request from ${data.name}`,
-    html: emailShell("New quote request", body),
-    text: `${data.name} · ${data.email} · ${data.phone}\n${data.eventType}\n${data.message}\n`,
+    subject: `New order ${data.reference} · ${formatAud(data.total)} · ${data.name}`,
+    html: emailShell("New order", body),
+    text: `New order ${data.reference}\n${data.name} · ${data.email} · ${data.phone}\n${data.address}\n\n${itemsText(data)}\n${data.notes ? `\nNotes: ${data.notes}\n` : ""}`,
   };
 }
 
 export function contactCustomerEmail(data: { name: string }) {
   const body = `
     <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.name)},</p>
-    <p style="margin:0;font-size:14px;">Thanks for contacting Wonderland Inflatables. We will get back to you within 2 business hours.</p>
+    <p style="margin:0;font-size:14px;">Thanks for getting in touch with Haven Snus. We usually reply within one business day.</p>
   `;
   return {
-    subject: "We received your message · Wonderland Inflatables",
+    subject: "We received your message · Haven Snus",
     html: emailShell("Message received", body),
-    text: `Hi ${data.name},\n\nWe received your message and will reply within 2 business hours.\n`,
+    text: `Hi ${data.name},\n\nThanks for getting in touch. We usually reply within one business day.\n`,
   };
 }
 
@@ -137,27 +129,48 @@ export function contactStaffEmail(data: {
   };
 }
 
-export function statusCustomerEmail(data: {
+const ORDER_STATUS_COPY: Record<string, string> = {
+  paid: "We have received your payment. Your order is now being packed.",
+  processing: "Your order is being packed and will ship soon.",
+  shipped: "Your order is on its way.",
+  delivered: "Your order has been marked as delivered. Enjoy, and thanks for shopping with us.",
+  cancelled: "Your order has been cancelled. If you did not expect this, reply to this email.",
+  refunded: "Your refund has been processed. It can take a few business days to appear.",
+};
+
+export function orderStatusEmail(data: {
   name: string;
-  kind: "order" | "quote" | "message";
+  reference: string;
   status: string;
+  trackingNumber?: string;
 }) {
-  const copy: Record<string, string> = {
-    contacted: "Our team has started reviewing your request and will follow up shortly.",
-    quoted: "Your quote is ready. Watch your inbox for pricing and next steps, or reply to this email.",
-    booked: "Great news: your request is confirmed. We will send delivery and payment details next.",
-    declined: "We are not able to fulfill this request as submitted. Reply to this email if you want help with another option.",
-    replied: "We have replied to your message. If you do not see it, check spam or reply here.",
-    read: "We have seen your message and will follow up if anything else is needed.",
-    closed: "We have closed this conversation. Reply if you need anything else.",
-  };
+  const message = ORDER_STATUS_COPY[data.status] ?? `Your order status is now ${data.status}.`;
+  const tracking =
+    data.status === "shipped" && data.trackingNumber
+      ? `<p style="margin:12px 0 0;font-size:14px;"><strong>Tracking number:</strong> ${escapeHtml(data.trackingNumber)}</p>`
+      : "";
   const body = `
     <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.name)},</p>
-    <p style="margin:0;font-size:14px;">${copy[data.status] ?? `Your ${data.kind} status is now ${escapeHtml(data.status)}.`}</p>
+    <p style="margin:0;font-size:14px;">${escapeHtml(message)}</p>
+    ${tracking}
+    <p style="margin:16px 0 0;font-size:13px;color:#4a5560;">Order reference: ${escapeHtml(data.reference)}</p>
   `;
   return {
-    subject: `Update on your ${data.kind} · Wonderland Inflatables`,
-    html: emailShell("Status update", body),
-    text: `Hi ${data.name},\n\n${copy[data.status] ?? `Your ${data.kind} status is now ${data.status}.`}\n`,
+    subject: `Order ${data.reference}: ${data.status} · Haven Snus`,
+    html: emailShell("Order update", body),
+    text: `Hi ${data.name},\n\n${message}\n${data.status === "shipped" && data.trackingNumber ? `Tracking number: ${data.trackingNumber}\n` : ""}\nOrder reference: ${data.reference}\n`,
+  };
+}
+
+export function contactStatusEmail(data: { name: string; status: string }) {
+  const copy: Record<string, string> = {
+    replied: "We have replied to your message. If you do not see it, check your spam folder or reply here.",
+    closed: "We have closed this conversation. Reply if you need anything else.",
+  };
+  const message = copy[data.status] ?? `Your message status is now ${data.status}.`;
+  return {
+    subject: "Update on your message · Haven Snus",
+    html: emailShell("Message update", `<p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.name)},</p><p style="margin:0;font-size:14px;">${escapeHtml(message)}</p>`),
+    text: `Hi ${data.name},\n\n${message}\n`,
   };
 }

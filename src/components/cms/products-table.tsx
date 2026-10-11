@@ -3,29 +3,28 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Eye, Pencil } from "lucide-react";
-import { PRODUCT_CATEGORIES } from "@/lib/cms/constants";
-import type { AdminProductListItem } from "@/lib/queries/cms";
-import { formatPrice } from "@/lib/utils";
+import type { AdminBrand, AdminProductListItem } from "@/lib/queries/cms";
+import { formatAud } from "@/lib/utils";
 
-export function ProductsTable({ products }: { products: AdminProductListItem[] }) {
+export function ProductsTable({ products, brands }: { products: AdminProductListItem[]; brands: AdminBrand[] }) {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
   const [status, setStatus] = useState("");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return products.filter((product) => {
-      if (category && product.category !== category) return false;
+      if (brand && product.brand !== brand) return false;
       if (status === "active" && !product.is_active) return false;
       if (status === "hidden" && product.is_active) return false;
       if (status === "out" && product.in_stock) return false;
       if (!needle) return true;
-      return [product.name, product.sku, product.slug, product.short_description]
+      return [product.name, product.sku, product.slug]
         .join(" ")
         .toLowerCase()
         .includes(needle);
     });
-  }, [products, query, category, status]);
+  }, [products, query, brand, status]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -37,11 +36,11 @@ export function ProductsTable({ products }: { products: AdminProductListItem[] }
           placeholder="Search products…"
           className="input text-sm py-2 max-w-xs"
         />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="input text-sm py-2 w-auto">
-          <option value="">All categories</option>
-          {PRODUCT_CATEGORIES.map((cat) => (
-            <option key={cat.value} value={cat.value}>
-              {cat.label}
+        <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input text-sm py-2 w-auto">
+          <option value="">All brands</option>
+          {brands.map((b) => (
+            <option key={b.slug} value={b.slug}>
+              {b.name}
             </option>
           ))}
         </select>
@@ -60,7 +59,7 @@ export function ProductsTable({ products }: { products: AdminProductListItem[] }
             <tr className="border-b border-slate-100 bg-slate-50/50">
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">SKU</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Category</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Strength</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Price</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Status</th>
               <th className="px-4 py-3 w-24"></th>
@@ -71,18 +70,16 @@ export function ProductsTable({ products }: { products: AdminProductListItem[] }
               <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-4 py-3">
                   <div className="font-medium text-slate-900 leading-snug">{product.name}</div>
-                  {product.short_description ? (
-                    <div className="text-xs text-slate-400 mt-0.5 hidden sm:block">
-                      {product.short_description.slice(0, 55)}
-                      {product.short_description.length > 55 ? "…" : ""}
-                    </div>
-                  ) : null}
+                  <div className="text-xs text-slate-400 mt-0.5 hidden sm:block">
+                    {brands.find((b) => b.slug === product.brand)?.name ?? product.brand}
+                    {product.is_featured ? " · Featured" : ""}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-slate-500 hidden md:table-cell font-mono text-xs">{product.sku}</td>
-                <td className="px-4 py-3 hidden lg:table-cell">
-                  <span className="badge-slate capitalize">{product.category.replace(/-/g, " ")}</span>
+                <td className="px-4 py-3 hidden lg:table-cell font-mono text-xs text-slate-600">
+                  {product.strength_mg != null ? `${product.strength_mg}mg` : "–"}
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(product.price)}</td>
+                <td className="px-4 py-3 font-semibold text-slate-900">{formatAud(product.price)}</td>
                 <td className="px-4 py-3 hidden sm:table-cell">
                   <div className="flex flex-col gap-1">
                     <span
@@ -93,7 +90,9 @@ export function ProductsTable({ products }: { products: AdminProductListItem[] }
                       {product.is_active ? "Active" : "Hidden"}
                     </span>
                     {!product.in_stock ? (
-                      <span className="text-xs text-slate-400">Out of stock</span>
+                      <span className="text-xs text-slate-400">Sold out</span>
+                    ) : product.stock_quantity != null ? (
+                      <span className="text-xs text-slate-400">{product.stock_quantity} in stock</span>
                     ) : null}
                   </div>
                 </td>

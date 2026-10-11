@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/cms/admin-shell";
 export const metadata: Metadata = {
   title: {
     default: "Admin",
-    template: "%s | Wonderland CMS",
+    template: "%s | Haven Snus CMS",
   },
   robots: { index: false, follow: false },
 };

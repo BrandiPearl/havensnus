@@ -11,37 +11,44 @@ import { SearchDialog } from "@/components/layout/search-dialog";
 import { CurrencySelect } from "@/components/currency/currency-select";
 import { useCurrency } from "@/components/currency/currency-provider";
 import { useSettings } from "@/components/layout/settings-provider";
-import { localizeUsdAmountsInText } from "@/lib/currency";
+import { localizeAmountsInText } from "@/lib/currency";
+import type { NavBrand } from "@/lib/queries/products";
 
-const CATEGORY_LINKS = [
-  { label: "Bounce Houses", href: "/products?category=bounce-houses" },
-  { label: "Water Slides", href: "/products?category=water-slides" },
-  { label: "Combo Units", href: "/products?category=combos" },
-  { label: "Obstacle Courses", href: "/products?category=obstacle-courses" },
-  { label: "Interactive Games", href: "/products?category=interactive" },
-  { label: "Tents & Tables", href: "/products?category=tents-tables" },
-  { label: "Concessions", href: "/products?category=concessions" },
+const STRENGTH_LINKS = [
+  { label: "Light & Regular", href: "/products?strength=light,regular" },
+  { label: "Strong", href: "/products?strength=strong" },
+  { label: "Extra Strong", href: "/products?strength=extra-strong" },
+  { label: "Ultra Strong & Extreme", href: "/products?strength=ultra-strong,extreme" },
 ];
 
-const NAV_LINKS: {
+type NavLinkItem = {
   label: string;
   href: string;
   children?: { label: string; href: string }[];
-}[] = [
-  { label: "Products", href: "/products", children: CATEGORY_LINKS },
-  { label: "Rentals", href: "/rentals" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Blog", href: "/blog" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
+};
+
+function navLinks(brands: NavBrand[]): NavLinkItem[] {
+  return [
+    {
+      label: "Shop",
+      href: "/products",
+      children: brands.map((b) => ({ label: b.name, href: `/products?brand=${b.slug}` })),
+    },
+    { label: "Brands", href: "/brands" },
+    { label: "Strengths", href: "/products?sort=strength-asc", children: STRENGTH_LINKS },
+    { label: "FAQ", href: "/faq" },
+    { label: "Blog", href: "/blog" },
+    { label: "Contact", href: "/contact" },
+  ];
+}
 
 function subscribeToScroll(onChange: () => void) {
   window.addEventListener("scroll", onChange, { passive: true });
   return () => window.removeEventListener("scroll", onChange);
 }
 
-export function Nav() {
+export function Nav({ brands }: { brands: NavBrand[] }) {
+  const NAV_LINKS = navLinks(brands);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -50,7 +57,7 @@ export function Nav() {
   const settings = useSettings();
   const { format } = useCurrency();
   const announcementText = settings.announcement
-    ? localizeUsdAmountsInText(settings.announcement, format)
+    ? localizeAmountsInText(settings.announcement, format)
     : "";
   const scrolled = useSyncExternalStore(
     subscribeToScroll,
@@ -91,8 +98,9 @@ export function Nav() {
     timerRef.current = setTimeout(() => setActiveDropdown(null), 130);
   }
 
+  // Links with a query string are shortcuts into the shop, not sections of their own.
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href.split("?")[0]);
+    href === "/" ? pathname === "/" : !href.includes("?") && pathname.startsWith(href);
 
   return (
     <>
@@ -105,7 +113,7 @@ export function Nav() {
             <>
               <span className="mx-2.5 text-white/25">/</span>
               <Link
-                href={settings.announcement_link_url || "/quote"}
+                href={settings.announcement_link_url || "/products"}
                 className="spec whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.14em] text-orange-400 underline underline-offset-4 hover:text-orange-300"
               >
                 {settings.announcement_link_text}
@@ -119,7 +127,7 @@ export function Nav() {
         className={cn(
           "sticky top-0 z-50 w-full border-b bg-white transition-shadow duration-200",
           scrolled
-            ? "border-slate-200 shadow-[0_1px_16px_rgba(27,23,18,0.07)]"
+            ? "border-slate-200 shadow-[0_1px_16px_rgba(19,26,32,0.07)]"
             : "border-slate-200"
         )}
       >
@@ -172,7 +180,7 @@ export function Nav() {
                         onMouseEnter={() => openDropdown(link.label)}
                         onMouseLeave={closeDropdown}
                       >
-                        <div className="w-[30rem] rounded-lg border border-slate-200 bg-white p-2 shadow-[0_18px_44px_rgba(27,23,18,0.12)]">
+                        <div className="w-[30rem] rounded-lg border border-slate-200 bg-white p-2 shadow-[0_18px_44px_rgba(19,26,32,0.12)]">
                           <div className="grid grid-cols-2 gap-0.5">
                             {link.children.map((child) => (
                               <Link
@@ -188,7 +196,7 @@ export function Nav() {
                             href="/products"
                             className="mt-2 flex items-center justify-between rounded-md border-t border-slate-200 px-3.5 pb-1 pt-3 text-sm font-semibold text-orange-700 hover:text-orange-600"
                           >
-                            View all products
+                            {link.label === "Shop" ? "Shop all pouches" : "View all products"}
                             <span aria-hidden>&rarr;</span>
                           </Link>
                         </div>
@@ -230,10 +238,10 @@ export function Nav() {
               <CartButton />
 
               <Link
-                href="/quote"
+                href="/products"
                 className="btn-primary ml-1.5 hidden px-4 py-2.5 text-[0.8125rem] sm:inline-flex"
               >
-                Get a quote
+                Shop now
               </Link>
 
               <button
@@ -281,8 +289,8 @@ export function Nav() {
               ))}
 
               <div className="space-y-2.5 py-5">
-                <Link href="/quote" className="btn-primary w-full">
-                  Get a free quote
+                <Link href="/products" className="btn-primary w-full">
+                  Shop all pouches
                 </Link>
                 <Link href="/cart" className="btn-secondary w-full">
                   View cart

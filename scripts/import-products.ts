@@ -2,7 +2,7 @@
  * Product Importer - Haven Snus
  * =============================
  * Pulls the catalogue from snusdownunder.com (WooCommerce Store API),
- * copies product images into Cloudflare R2, and upserts the Supabase
+ * copies product images into Cloudflare R2 (as WebP, max 1000px), and upserts the Supabase
  * `brands`, `products`, `product_images`, and `product_features` tables.
  *
  * Safe to re-run: products are matched on (source_site, source_id) and
@@ -25,6 +25,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
@@ -313,14 +314,8 @@ function r2Client() {
   });
 }
 
-const CONTENT_TYPES: Record<string, string> = {
-  webp: "image/webp",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  avif: "image/avif",
-};
+/** Packshots are shown at most ~600px wide; 1000px covers 2x displays. */
+const IMAGE_MAX_PX = 1000;
 
 async function objectExists(s3: S3Client, bucket: string, key: string) {
   try {
@@ -331,22 +326,25 @@ async function objectExists(s3: S3Client, bucket: string, key: string) {
   }
 }
 
-/** Copy one source image into R2 and return its public URL. */
+/** Copy one source image into R2 as a web-sized WebP and return its public URL. */
 async function mirrorImage(s3: S3Client, src: string, slug: string, index: number): Promise<string> {
   const bucket = process.env.R2_BUCKET!;
   const publicUrl = process.env.R2_PUBLIC_URL!.replace(/\/$/, "");
-  const ext = (new URL(src).pathname.split(".").pop() ?? "webp").toLowerCase();
-  const key = `products/${slug}${index ? `-${index + 1}` : ""}.${ext}`;
+  const key = `products/${slug}${index ? `-${index + 1}` : ""}.webp`;
 
   if (!(await objectExists(s3, bucket, key))) {
     const res = await fetch(src, { headers: { ...HTTP_HEADERS, Accept: "image/*" } });
     if (!res.ok) throw new Error(`image HTTP ${res.status}: ${src}`);
+    const body = await sharp(Buffer.from(await res.arrayBuffer()))
+      .resize({ width: IMAGE_MAX_PX, height: IMAGE_MAX_PX, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
     await s3.send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
-        Body: Buffer.from(await res.arrayBuffer()),
-        ContentType: CONTENT_TYPES[ext] ?? res.headers.get("content-type") ?? "application/octet-stream",
+        Body: body,
+        ContentType: "image/webp",
         CacheControl: "public, max-age=31536000, immutable",
       })
     );

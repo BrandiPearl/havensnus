@@ -4,7 +4,7 @@ import { getBlogPosts } from "@/lib/queries/blog";
 import { CoverImage } from "@/components/ui/cover-image";
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString("en-AU", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -26,8 +26,8 @@ export async function BlogPreview() {
       <div className="container-wide">
         <div className="section-intro flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
-            <p className="eyebrow">Field notes</p>
-            <h2 className="section-heading">Resources for rental operators</h2>
+            <p className="eyebrow">Guides</p>
+            <h2 className="section-heading">Pouch guides and news</h2>
           </div>
           <Link href="/blog" className="link-arrow">
             All articles

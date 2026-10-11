@@ -1,82 +1,76 @@
 import type { Metadata } from "next";
 import { InfoPage, InfoSection, InfoCta } from "@/components/layout/info-page";
-import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
+import { getSiteSettings } from "@/lib/queries/settings";
+import { formatAud } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Shipping Info",
-  description:
-    "Wonderland Inflatables ships commercial inflatables via LTL freight to all 48 contiguous US states. Free terminal shipping on orders over $2,500.",
+  title: "Shipping",
+  description: "Tracked delivery of nicotine pouches across Australia and New Zealand. Rates, timing and what to expect.",
+  alternates: { canonical: "/shipping" },
 };
 
-export default function ShippingPage() {
+export default async function ShippingPage() {
+  const settings = await getSiteSettings();
+  const free = settings.free_shipping_threshold;
+
   return (
     <InfoPage
-      eyebrow="Support"
-      title="Shipping Info"
-      intro="We ship from our Ontario, California warehouse via LTL freight. Most orders leave within 3-5 business days of payment confirmation."
+      eyebrow="Help"
+      title="Shipping"
+      intro="We ship to Australia and New Zealand, with tracking on every order."
     >
-      <InfoSection title="Where we ship">
+      <InfoSection title="Rates">
+        <table>
+          <thead>
+            <tr>
+              <th>Destination</th>
+              <th>Flat rate</th>
+              <th>Free from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Australia</td>
+              <td>{formatAud(settings.shipping_au)}</td>
+              <td>{free > 0 ? formatAud(free) : "–"}</td>
+            </tr>
+            <tr>
+              <td>New Zealand</td>
+              <td>{formatAud(settings.shipping_nz)}</td>
+              <td>{free > 0 ? formatAud(free) : "–"}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>All amounts are in Australian dollars. The free shipping threshold applies to the order subtotal.</p>
+      </InfoSection>
+
+      <InfoSection title="When your order ships">
         <p>
-          We ship to all 48 contiguous US states. We do not currently ship to Alaska,
-          Hawaii, US territories, or internationally. If you need a unit delivered to
-          a job site, warehouse, or residential address, we can arrange it.
+          After you place an order we email you payment details. Your order is packed and handed to the
+          courier once payment is received, and we email you a tracking number when it ships.
         </p>
       </InfoSection>
 
-      <InfoSection title="Transit times">
-        <p>Typical transit after the order ships:</p>
-        <ul>
-          <li>West Coast: 2-3 business days</li>
-          <li>Mountain and Midwest: 3-5 business days</li>
-          <li>East Coast and Southeast: 5-7 business days</li>
-        </ul>
+      <InfoSection title="Australian orders">
         <p>
-          Transit times are estimates. Weather, carrier volume, and appointment
-          windows can add a day or two.
+          Under Australian rules, nicotine products imported for personal use require a valid prescription
+          from an Australian doctor. You will be asked to confirm you hold one at checkout. Orders that
+          cannot be delivered for regulatory reasons may be cancelled.
         </p>
       </InfoSection>
 
-      <InfoSection title="Shipping cost">
+      <InfoSection title="Packaging">
+        <p>Orders are sent in plain packaging with no product branding on the outside.</p>
+      </InfoSection>
+
+      <InfoSection title="Lost or damaged parcels">
         <p>
-          Freight is quoted by weight, pallet size, and destination ZIP. Orders over
-          $2,500 qualify for free terminal shipping (you pick up at a local freight
-          terminal). Residential / liftgate delivery and inside delivery are available
-          for an additional fee.
-        </p>
-        <p>
-          Request a shipping quote with your order by filling out the{" "}
-          <a href="/quote" className="text-orange-600 font-medium">quote form</a>{" "}
-          or emailing{" "}
-          <a href={mailHref(BUSINESS_EMAIL)} className="text-orange-600 font-medium">
-            {BUSINESS_EMAIL}
-          </a>
-          .
+          If your tracking stops updating or a parcel arrives damaged, contact us with your order reference
+          and a photo if relevant. We will work with the courier to sort it out.
         </p>
       </InfoSection>
 
-      <InfoSection title="What arrives">
-        <p>
-          Units ship folded in a heavy duty bag, typically on a pallet. Each order
-          includes the inflatable, commercial blower(s), stakes, tie-down straps, a
-          repair kit, and a setup / safety checklist.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Receiving your shipment">
-        <p>
-          LTL freight is scheduled. The carrier will call to set a delivery window.
-          Have a forklift, pallet jack, or extra hands ready. Inspect the pallet
-          before signing. Note any damage on the bill of lading and photograph it
-          before the driver leaves.
-        </p>
-      </InfoSection>
-
-      <InfoCta
-        title="Need a shipping quote?"
-        body="Tell us your ZIP and the units you want. We'll send freight pricing with your product quote."
-        href="/quote"
-        label="Get a Quote"
-      />
+      <InfoCta title="Question about an order?" body="Send us your order reference and we will look into it." />
     </InfoPage>
   );
 }

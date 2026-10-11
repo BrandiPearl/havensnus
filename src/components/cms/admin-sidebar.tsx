@@ -7,6 +7,7 @@ import {
   Package,
   FileText,
   MessageSquare,
+  ShoppingBag,
   Settings,
   LayoutDashboard,
   Star,
@@ -19,6 +20,7 @@ import { LogoutButton } from "@/components/cms/logout-button";
 
 const NAV_MAIN = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
 ];
 
 const NAV_CONTENT = [
@@ -28,7 +30,7 @@ const NAV_CONTENT = [
 ];
 
 const NAV_SYSTEM = [
-  { label: "Inbox", href: "/admin/quotes", icon: MessageSquare },
+  { label: "Messages", href: "/admin/messages", icon: MessageSquare },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

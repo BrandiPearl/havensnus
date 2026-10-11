@@ -4,7 +4,8 @@ import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Wonderland Inflatables collects, uses, and protects personal information.",
+  description: "How Haven Snus collects, uses and protects your personal information.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
@@ -12,53 +13,44 @@ export default function PrivacyPage() {
     <InfoPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="Last updated August 18, 2026. This policy explains what information we collect when you use wonderlandinflatables.com and how we use it."
+      intro="This policy explains what personal information we collect when you use havensnus.com and how we use it."
     >
-      <InfoSection title="Information we collect">
-        <p>
-          When you request a quote, send a contact message, or place an order, we
-          collect your name, email, phone number, address, and the details of your
-          event or order. We also collect basic analytics such as pages visited,
-          device type, and referring site. If you use live chat, Tawk.to processes
-          those messages on our behalf so we can answer you.
-        </p>
+      <InfoSection title="What we collect">
+        <ul>
+          <li>Order details: your name, email, phone number, delivery address and the products you order.</li>
+          <li>Messages you send us through the contact form or by email.</li>
+          <li>Basic technical data, such as your approximate country, used to show prices in the right currency.</li>
+        </ul>
       </InfoSection>
 
       <InfoSection title="How we use it">
+        <ul>
+          <li>To process, ship and support your orders.</li>
+          <li>To reply to your messages.</li>
+          <li>To meet our legal obligations, including age and regulatory checks.</li>
+        </ul>
+        <p>We do not sell your personal information.</p>
+      </InfoSection>
+
+      <InfoSection title="Who we share it with">
         <p>
-          We use this information to respond to quotes, fulfill orders, improve the
-          site, and send order-related email. We do not sell your personal information.
-          We may share it with shipping carriers, payment processors, and other
-          vendors who need it to complete your request.
+          We share only what is needed with the services that help us run the shop: our courier, our email
+          provider, our hosting and database providers, and our live chat provider. Some of these services
+          store data outside Australia and New Zealand.
         </p>
       </InfoSection>
 
       <InfoSection title="Cookies">
         <p>
-          We use cookies to keep the site working (for example, cart and session) and
-          to measure traffic. You can block cookies in your browser. Some site features
-          may not work if you do.
+          We use a small number of cookies to remember your age confirmation, currency and cart. Our live
+          chat widget may set its own cookies.
         </p>
       </InfoSection>
 
       <InfoSection title="Your choices">
         <p>
-          Email us at{" "}
-          <a href={mailHref(BUSINESS_EMAIL)} className="text-orange-600 font-medium">
-            {BUSINESS_EMAIL}
-          </a>{" "}
-          to request a copy of your data, correct it, or ask us to delete it. We will
-          respond within 30 days.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Contact">
-        <p>
-          Email us at{" "}
-          <a href={mailHref(BUSINESS_EMAIL)} className="text-orange-600 font-medium">
-            {BUSINESS_EMAIL}
-          </a>
-          .
+          You can ask to see, correct or delete the personal information we hold about you by emailing{" "}
+          <a href={mailHref(BUSINESS_EMAIL)}>{BUSINESS_EMAIL}</a>.
         </p>
       </InfoSection>
     </InfoPage>

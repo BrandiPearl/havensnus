@@ -1,43 +1,30 @@
-export type ProductCategory =
-  | "bounce-houses"
-  | "water-slides"
-  | "combos"
-  | "obstacle-courses"
-  | "interactive"
-  | "tents-tables"
-  | "concessions"
-  | "generators"
-  | "other";
-
-export type ProductCondition = "new" | "used" | "refurbished";
-
 export interface Product {
   id: string;
   slug: string;
   name: string;
   sku: string;
+  /** Sanitised HTML (p, h3, ul, li, strong, em). */
   description: string;
   short_description: string;
+  /** AUD, per can. */
   price: number;
   compare_at_price?: number;
-  category: ProductCategory;
-  subcategory?: string;
+  brand?: string;
+  brand_name?: string;
+  product_line?: string;
   tags: string[];
   images: ProductImage[];
-  specs: ProductSpecs;
   features: string[];
+  strength_mg?: number;
+  strength_level?: string;
+  flavour?: string;
+  flavour_family?: string;
+  pouch_format?: string;
+  pouches_per_tin?: number;
+  stock_quantity?: number;
+  in_stock: boolean;
   is_featured: boolean;
   is_new: boolean;
-  in_stock: boolean;
-  rental_available: boolean;
-  purchase_available: boolean;
-  capacity?: number;
-  age_range?: string;
-  dimensions?: ProductDimensions;
-  weight?: number;
-  material?: string;
-  color?: string;
-  theme?: string;
   created_at: string;
   updated_at: string;
   seo?: ProductSEO;
@@ -51,40 +38,21 @@ export interface ProductImage {
   is_primary: boolean;
 }
 
-export interface ProductSpecs {
-  length?: string;
-  width?: string;
-  height?: string;
-  weight?: string;
-  capacity?: string;
-  blower?: string;
-  material?: string;
-  setup_time?: string;
-  age_range?: string;
-  outlet_required?: string;
-}
-
-export interface ProductDimensions {
-  length: number;
-  width: number;
-  height: number;
-  unit: "ft" | "in" | "m";
-}
-
 export interface ProductSEO {
   title?: string;
   description?: string;
   keywords?: string[];
 }
 
-export interface Category {
+export interface Brand {
   id: string;
   name: string;
-  slug: ProductCategory;
-  description: string;
-  image_url: string;
-  parent_id?: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  image_url?: string;
   position: number;
+  is_featured: boolean;
   product_count?: number;
 }
 
@@ -115,46 +83,32 @@ export interface Author {
   bio?: string;
 }
 
-export interface QuoteRequest {
-  id?: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  event_date: string;
-  event_type: string;
-  event_address: string;
-  city: string;
-  state: string;
-  zip: string;
-  guests_count: string;
-  products_interested: string[];
-  message: string;
-  budget?: string;
-  how_did_you_hear?: string;
-  created_at?: string;
-  status?: "pending" | "contacted" | "quoted" | "booked" | "declined";
-}
-
 export interface Testimonial {
   id: string;
   name: string;
   location: string;
   rating: number;
   review: string;
-  event_type: string;
+  product: string;
   avatar?: string;
   date: string;
 }
 
+export type SortOption =
+  | "featured"
+  | "price-asc"
+  | "price-desc"
+  | "strength-asc"
+  | "strength-desc"
+  | "newest"
+  | "az";
+
 export interface FilterState {
-  category?: ProductCategory;
-  priceMin?: number;
-  priceMax?: number;
-  tags?: string[];
-  inStock?: boolean;
-  isNew?: boolean;
-  rental?: boolean;
+  brands: string[];
+  strengths: string[];
+  flavours: string[];
+  formats: string[];
+  inStock: boolean;
   search?: string;
-  sort?: "featured" | "price-asc" | "price-desc" | "newest" | "az" | "za";
+  sort: SortOption;
 }

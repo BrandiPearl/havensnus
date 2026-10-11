@@ -49,7 +49,7 @@ export function SearchDialog({
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search bounce houses, slides, SKUs…"
+              placeholder="Search brands, flavours, strengths…"
               className="flex-1 text-sm outline-none"
             />
             <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700" aria-label="Close">
@@ -57,7 +57,7 @@ export function SearchDialog({
             </button>
           </div>
           <button type="submit" className="btn-primary w-full mt-3 text-sm py-2">
-            Search catalog
+            Search the shop
           </button>
         </form>
       </div>

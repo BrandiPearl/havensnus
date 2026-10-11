@@ -5,12 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", {
+/** AUD amount for emails and the CMS, e.g. "$14.99". */
+export function formatAud(amount: number): string {
+  return new Intl.NumberFormat("en-AU", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(price);
+    currency: "AUD",
+    minimumFractionDigits: 2,
+  }).format(amount);
 }
 
 export function slugify(str: string): string {

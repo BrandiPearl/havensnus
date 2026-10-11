@@ -4,7 +4,8 @@ import { ProductCard } from "@/components/ui/product-card";
 import { getFeaturedProducts } from "@/lib/queries/products";
 
 export async function FeaturedProducts() {
-  const featured = await getFeaturedProducts(6);
+  const featured = await getFeaturedProducts(8);
+  if (featured.length === 0) return null;
 
   return (
     <section className="section-block border-t border-slate-200">
@@ -12,10 +13,9 @@ export async function FeaturedProducts() {
         <div className="section-intro flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
             <p className="eyebrow">Top sellers</p>
-            <h2 className="section-heading">Best-selling units</h2>
+            <h2 className="section-heading">Customer favourites</h2>
             <p className="section-subheading">
-              Proven earners for rental businesses nationwide, in stock and
-              crated within five business days.
+              The cans our customers reorder most, in stock and ready to ship.
             </p>
           </div>
           <Link href="/products" className="link-arrow hidden sm:inline-flex">
@@ -24,9 +24,9 @@ export async function FeaturedProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {featured.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 3} />
+            <ProductCard key={product.id} product={product} priority={i < 4} />
           ))}
         </div>
 

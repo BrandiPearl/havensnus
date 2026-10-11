@@ -5,13 +5,14 @@ import { getBlogPosts } from "@/lib/queries/blog";
 import { CoverImage } from "@/components/ui/cover-image";
 
 export const metadata: Metadata = {
-  title: "Inflatable Business Resources & Tips",
+  title: "Nicotine Pouch Guides & News",
   description:
-    "Expert guides, business tips, and product advice for inflatable rental operators. Learn how to start, grow, and run a profitable bounce house business.",
+    "Guides to nicotine pouch strengths, flavours and brands, plus news from Haven Snus.",
+  alternates: { canonical: "/blog" },
 };
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString("en-AU", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -27,14 +28,13 @@ export default async function BlogPage() {
       <div className="bg-slate-50 border-b border-slate-100">
         <div className="container-wide py-12">
           <p className="text-xs font-semibold text-orange-600 uppercase tracking-widest mb-2">
-            Resources
+            Guides
           </p>
           <h1 className="text-3xl font-bold text-slate-900">
-            The Wonderland Blog
+            The Haven Snus Blog
           </h1>
           <p className="mt-2 text-slate-500 text-sm max-w-xl">
-            Tips, guides, and insights for inflatable rental business owners and event
-            professionals.
+            Guides to strengths, flavours and brands, and news from the shop.
           </p>
         </div>
       </div>

@@ -9,15 +9,23 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { CURRENCY_COOKIE, currencyForCountry, formatMoney, toUsd } from "@/lib/currency";
+import {
+  BASE_CURRENCY,
+  CURRENCY_COOKIE,
+  currencyForCountry,
+  formatMoney,
+  toBase,
+} from "@/lib/currency";
 
 type CurrencyContextValue = {
+  /** The currency prices are actually rendered in. */
   currency: string;
   country: string;
   rate: number;
-  ready: boolean;
-  format: (usdAmount: number) => string;
-  toUsd: (localAmount: number) => number;
+  /** Format an AUD amount in the visitor's currency. */
+  format: (amount: number) => string;
+  /** Convert an amount typed in the visitor's currency back to AUD. */
+  toBase: (localAmount: number) => number;
   setCurrency: (code: string) => void;
 };
 
@@ -36,59 +44,31 @@ export function CurrencyProvider({
   initialCurrency?: string;
   children: ReactNode;
 }) {
-  const [country, setCountry] = useState(initialCountry ?? "");
-  const [currency, setCurrencyState] = useState(initialCurrency || "USD");
-  const [rates, setRates] = useState<Record<string, number>>({ USD: 1 });
-  const [ready, setReady] = useState(Boolean(initialCurrency));
+  const country = initialCountry ?? "";
+  const [selected, setSelected] = useState(initialCurrency || currencyForCountry(country));
+  const [rates, setRates] = useState<Record<string, number>>({ [BASE_CURRENCY]: 1 });
 
   useEffect(() => {
     let cancelled = false;
-
-    async function load() {
-      const ratesRes = await fetch("/api/rates")
-        .then((res) => res.json())
-        .catch(() => ({ rates: { USD: 1 } }));
-      if (cancelled) return;
-      const nextRates = { USD: 1, ...(ratesRes.rates ?? {}) };
-      setRates(nextRates);
-
-      if (initialCurrency) {
-        writeCookie(initialCurrency);
-        setReady(true);
-        return;
-      }
-
-      let detected = initialCountry || "";
-      if (!detected) {
-        try {
-          const geo = await fetch("https://ipwho.is/?fields=country_code,success").then((res) =>
-            res.json()
-          );
-          if (geo?.success && geo.country_code) detected = String(geo.country_code).toUpperCase();
-        } catch {
-          detected = "";
-        }
-      }
-      if (cancelled) return;
-      if (detected) setCountry(detected);
-      const next = currencyForCountry(detected);
-      setCurrencyState(next);
-      writeCookie(next);
-      setReady(true);
-    }
-
-    void load();
+    fetch("/api/rates")
+      .then((res) => res.json())
+      .then((data: { rates?: Record<string, number> }) => {
+        if (!cancelled) setRates({ [BASE_CURRENCY]: 1, ...(data.rates ?? {}) });
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [initialCountry, initialCurrency]);
+  }, []);
 
   const setCurrency = useCallback((code: string) => {
     const next = code.toUpperCase();
-    setCurrencyState(next);
+    setSelected(next);
     writeCookie(next);
   }, []);
 
+  // Without a rate, show AUD rather than AUD numbers labelled as NZD.
+  const currency = rates[selected] ? selected : BASE_CURRENCY;
   const rate = rates[currency] ?? 1;
 
   const value = useMemo(
@@ -96,12 +76,11 @@ export function CurrencyProvider({
       currency,
       country,
       rate,
-      ready,
-      format: (usdAmount: number) => formatMoney(usdAmount, currency, rate),
-      toUsd: (localAmount: number) => toUsd(localAmount, rate),
+      format: (amount: number) => formatMoney(amount, currency, rate),
+      toBase: (localAmount: number) => toBase(localAmount, rate),
       setCurrency,
     }),
-    [currency, country, rate, ready, setCurrency]
+    [currency, country, rate, setCurrency]
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;

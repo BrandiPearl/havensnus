@@ -1,5 +1,4 @@
 import type { BlogPost } from "@/types";
-import { BLOG_POSTS } from "@/lib/data/mock-products";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -21,7 +20,7 @@ function mapRow(row: Record<string, unknown>): BlogPost {
     cover_image: String(row.cover_image ?? ""),
     author: {
       id: String(author.id ?? ""),
-      name: String(author.name ?? "Wonderland Team"),
+      name: String(author.name ?? "Haven Snus"),
       avatar: author.avatar_url ? String(author.avatar_url) : undefined,
       bio: author.bio ? String(author.bio) : undefined,
     },
@@ -41,7 +40,7 @@ function mapRow(row: Record<string, unknown>): BlogPost {
 }
 
 export async function getBlogPosts(limit = 20): Promise<BlogPost[]> {
-  if (!isSupabaseConfigured()) return BLOG_POSTS.slice(0, limit);
+  if (!isSupabaseConfigured()) return [];
 
   const supabase = await blogClient();
 
@@ -54,17 +53,14 @@ export async function getBlogPosts(limit = 20): Promise<BlogPost[]> {
 
   if (error) {
     console.error("getBlogPosts:", error.message);
-    return BLOG_POSTS.slice(0, limit);
+    return [];
   }
 
-  const posts = (data ?? []).map(mapRow);
-  return posts.length > 0 ? posts : BLOG_POSTS.slice(0, limit);
+  return (data ?? []).map(mapRow);
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-  if (!isSupabaseConfigured()) {
-    return BLOG_POSTS.find((p) => p.slug === slug) ?? null;
-  }
+  if (!isSupabaseConfigured()) return null;
 
   const supabase = await blogClient();
 
@@ -77,9 +73,9 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
   if (error) {
     console.error("getBlogPostBySlug:", error.message);
-    return BLOG_POSTS.find((p) => p.slug === slug) ?? null;
+    return null;
   }
-  if (!data) return BLOG_POSTS.find((p) => p.slug === slug) ?? null;
+  if (!data) return null;
   return mapRow(data as Record<string, unknown>);
 }
 

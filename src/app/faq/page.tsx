@@ -2,144 +2,113 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
+import { getSiteSettings } from "@/lib/queries/settings";
+import { formatAud } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to the most common questions about buying, renting, and operating commercial inflatables from Wonderland Inflatables.",
+    "What nicotine pouches are, how to use them, how strengths work, and how ordering and delivery work at Haven Snus.",
+  alternates: { canonical: "/faq" },
 };
 
-const FAQ_SECTIONS = [
-  {
-    section: "Buying & Ordering",
-    faqs: [
-      {
-        q: "What makes Wonderland Inflatables different from other suppliers?",
-        a: "All of our inflatables are built from 18oz commercial grade PVC vinyl with quadruple stitched seams and commercial grade blowers. We don't sell consumer grade units repackaged as commercial, everything in our catalog is purpose built for daily rental use and heavy commercial operation.",
-      },
-      {
-        q: "Do you offer financing or payment plans?",
-        a: "Yes. We work with several equipment financing partners who specialize in inflatable rental businesses. Approved operators can finance purchases with as little as 10% down and terms up to 60 months. Contact our sales team for a no obligation financing quote.",
-      },
-      {
-        q: "What is included with my purchase?",
-        a: "Every unit ships with the inflatable, commercial blower(s), ground stakes, tie-down straps, a commercial patch repair kit, and a heavy duty storage/carry bag. Setup instructions and a safety checklist are included digitally.",
-      },
-      {
-        q: "Can I see the product before I buy?",
-        a: `Yes, we have a showroom at our Ontario, CA warehouse. You can visit by appointment Monday-Friday, 8am-4pm PST. Email ${BUSINESS_EMAIL} to schedule. If you can't visit in person, we can arrange a live video walkthrough of any unit.`,
-      },
-      {
-        q: "Do you offer bulk or wholesale pricing?",
-        a: "Yes. Operators purchasing 3+ units receive tiered discounts starting at 5%. For orders of 10+ units, contact us for a custom wholesale quote. We've helped dozens of operators build their initial fleets from scratch.",
-      },
-    ],
-  },
-  {
-    section: "Shipping & Delivery",
-    faqs: [
-      {
-        q: "Where do you ship?",
-        a: "We ship to all 48 contiguous US states via LTL freight. We do not currently ship to Alaska, Hawaii, or internationally. Most orders ship from our Ontario, CA warehouse within 3-5 business days of payment confirmation.",
-      },
-      {
-        q: "How much does shipping cost?",
-        a: "Shipping is calculated based on weight, dimensions, and delivery zip code. Orders over $2,500 qualify for free terminal shipping (delivery to a local freight terminal for customer pickup). Home delivery (liftgate service) is available for an additional fee. Contact us for a specific shipping quote.",
-      },
-      {
-        q: "How long does delivery take?",
-        a: "Transit times vary by destination but typically range from 3-7 business days from ship date. West Coast deliveries are often 2-3 days; East Coast deliveries average 5-7 days.",
-      },
-      {
-        q: "What if my unit arrives damaged?",
-        a: "Inspect your delivery thoroughly before signing the bill of lading. Note any visible damage on the delivery receipt. Take photographs of all damage before moving the unit. Contact us within 48 hours of delivery and we will work with the freight carrier and our quality team to resolve the issue at no cost to you.",
-      },
-    ],
-  },
-  {
-    section: "Safety & Compliance",
-    faqs: [
-      {
-        q: "Are your inflatables ASTM certified?",
-        a: "Yes. All Wonderland Inflatables products meet or exceed ASTM F2374 standards for commercial use inflatables. Certification documentation is available upon request and required for insurance and permit purposes in most states.",
-      },
-      {
-        q: "What insurance do I need to operate commercially?",
-        a: "Most operators carry a Commercial General Liability policy with $1M per-occurrence and $2M aggregate limits, with inflatables specifically listed as covered equipment. We recommend working with an insurance broker who specializes in the amusement and rental industry. We can refer you to brokers our customers have had success with.",
-      },
-      {
-        q: "Do I need a permit to operate inflatables commercially?",
-        a: "Requirements vary significantly by state and municipality. Many states require an amusement ride operator permit or registration for commercial inflatable operation. We strongly recommend contacting your state's Department of Labor or Consumer Protection office before operating commercially.",
-      },
-    ],
-  },
-  {
-    section: "Maintenance & Repairs",
-    faqs: [
-      {
-        q: "How do I maintain my inflatable to maximize its lifespan?",
-        a: "Always ensure the unit is completely dry before storing, mold and mildew are the leading causes of premature inflatable failure. Inspect seams and panels after every rental. Store folded (never crumpled) in a cool, dry location. Clean with mild soap and water; never use bleach or petroleum-based solvents on the vinyl.",
-      },
-      {
-        q: "What is the expected lifespan of a commercial inflatable?",
-        a: "With proper maintenance, our commercial grade units typically last 5 to 10 years of regular rental use. We have customers who've had their units in service for 12+ years with only minor repairs. Consumer grade inflatables, by contrast, typically fail within 1 to 2 seasons of rental use.",
-      },
-      {
-        q: "Can I repair punctures myself?",
-        a: "Yes, every unit comes with a commercial patch repair kit. Small punctures (under 6 inches) can be repaired with vinyl patch cement and material in under 30 minutes. For larger tears or seam failures, contact us, we can advise on the repair or connect you with a certified repair technician in your area.",
-      },
-      {
-        q: "What warranty do you offer?",
-        a: "All products carry a 1-year limited commercial warranty covering manufacturing defects in materials and workmanship. This does not cover damage from misuse, overpressure, improper anchoring, or normal wear. Extended warranty options are available at the time of purchase.",
-      },
-    ],
-  },
-  {
-    section: "Rental Business",
-    faqs: [
-      {
-        q: "How much can I earn renting inflatables?",
-        a: "Earnings vary significantly by market, pricing, and marketing effort. As a rough benchmark: a water slide renting for $500/day and booked 30 weekends per year generates $15,000 in annual revenue. Operators with fleets of 5 to 10 units in established markets commonly gross $80,000 to $200,000+ per year.",
-      },
-      {
-        q: "What events are most profitable for rental operators?",
-        a: "In order of typical profitability: corporate events and company picnics (large budgets, often repeat annually), school carnivals and church festivals (large bookings, multiple units), and birthday parties (high volume, lower individual revenue). Building relationships with event planners and school PTAs can fill your calendar quickly.",
-      },
-      {
-        q: "Do you offer any training for new operators?",
-        a: "Yes, we host quarterly virtual training sessions covering setup safety, maintenance, marketing, and pricing. All new customers are invited to our next session free of charge. We also have a library of setup videos and operational guides on our blog.",
-      },
-    ],
-  },
-];
+function faqSections(freeFrom: number, au: number, nz: number) {
+  const free = freeFrom > 0 ? ` Orders over ${formatAud(freeFrom)} ship free.` : "";
+  return [
+    {
+      section: "About nicotine pouches",
+      faqs: [
+        {
+          q: "What is a nicotine pouch?",
+          a: "A small white pouch containing nicotine, plant fibres and flavouring. It contains no tobacco leaf. You place it under your top lip and the nicotine is absorbed through the gum, with no smoke or vapour.",
+        },
+        {
+          q: "How do I use one?",
+          a: "Tuck a pouch between your gum and top lip. You will feel a tingle as the nicotine releases. Keep it in for anywhere from 10 to 60 minutes, then throw it in the bin. Most cans have a compartment in the lid for used pouches. Do not swallow it.",
+        },
+        {
+          q: "Is it the same as snus?",
+          a: "Not quite. Traditional Swedish snus contains ground tobacco. The pouches we sell are tobacco-free nicotine pouches, though many people still call them snus.",
+        },
+        {
+          q: "Who are these products for?",
+          a: "Adults 18 and over who already use nicotine. Nicotine is addictive. If you do not use nicotine, please do not start. These products are not suitable during pregnancy or breastfeeding.",
+        },
+      ],
+    },
+    {
+      section: "Strengths and formats",
+      faqs: [
+        {
+          q: "What does the strength scale mean?",
+          a: "Each can lists its nicotine in mg per pouch and a level from Light to Extreme, shown as one to six dots. Light is up to about 3mg, Regular 4 to 6.5mg, Strong 7.5 to 11mg, Extra Strong 11 to 16mg, Ultra Strong 16 to 24mg and Extreme 25mg and up.",
+        },
+        {
+          q: "Which strength should I start with?",
+          a: "If you are new to pouches, start with Light or Regular and move up a step at a time if you need to. If you are switching from cigarettes or vaping, Regular or Strong is a common starting point. Extra Strong and above are for experienced users.",
+        },
+        {
+          q: "What is the difference between slim, mini and dry pouches?",
+          a: "Slim pouches are long and thin, sit comfortably and release quickly. Mini pouches are smaller and more discreet. Dry pouches have less moisture, so they release more slowly and drip less.",
+        },
+        {
+          q: "How should I store my cans?",
+          a: "Somewhere cool and dry. Most cans keep best in the fridge, which helps hold moisture and flavour. Keep them out of reach of children and pets.",
+        },
+      ],
+    },
+    {
+      section: "Orders and delivery",
+      faqs: [
+        {
+          q: "Where do you ship?",
+          a: `Australia and New Zealand. Every order is sent with tracking. Shipping is a flat ${formatAud(au)} to Australia and ${formatAud(nz)} to New Zealand.${free}`,
+        },
+        {
+          q: "How do I pay?",
+          a: "Place your order at checkout and we will email you payment details. Your order is packed and shipped as soon as payment is received.",
+        },
+        {
+          q: "Do I need a prescription to order to Australia?",
+          a: "Under Australian rules, importing nicotine products for personal use requires a valid prescription from an Australian doctor. You will be asked to confirm you hold one at checkout. Orders to New Zealand do not need one.",
+        },
+        {
+          q: "Why are prices in AUD?",
+          a: "All prices are set and charged in Australian dollars. New Zealand visitors see an NZD estimate based on today's exchange rate.",
+        },
+        {
+          q: "Is the packaging discreet?",
+          a: "Yes. Orders ship in a plain outer box or satchel with no product branding.",
+        },
+      ],
+    },
+  ];
+}
 
-export default function FaqPage() {
+export default async function FAQPage() {
+  const settings = await getSiteSettings();
+  const sections = faqSections(settings.free_shipping_threshold, settings.shipping_au, settings.shipping_nz);
+
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header */}
-      <div className="bg-slate-50 border-b border-slate-100">
-        <div className="container-wide py-12">
-          <p className="text-xs font-semibold text-orange-600 uppercase tracking-widest mb-2">
-            Support
-          </p>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Frequently Asked Questions
-          </h1>
-          <p className="mt-2 text-slate-500 text-sm max-w-xl">
-            Everything you need to know about buying, operating, and maintaining
-            commercial inflatables.
+    <div className="min-h-screen bg-white">
+      <div className="border-b border-slate-200 bg-slate-50">
+        <div className="container-wide py-12 lg:py-14">
+          <p className="eyebrow">Help</p>
+          <h1 className="display-lg text-slate-900">Frequently asked questions</h1>
+          <p className="mt-4 max-w-xl text-[0.9375rem] leading-relaxed text-slate-600">
+            How pouches work, how to pick a strength, and how ordering and delivery work.
           </p>
         </div>
       </div>
 
       <div className="container-wide py-12 lg:py-16">
         <div className="max-w-3xl">
-          {FAQ_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <div key={section.section} className="mb-12">
-              <h2 className="text-lg font-bold text-slate-900 mb-5 pb-3 border-b border-slate-100">
+              <h2 className="mb-5 border-b border-slate-200 pb-3 font-display text-lg font-bold text-slate-900">
                 {section.section}
               </h2>
-              <div className="space-y-0 divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100">
                 {section.faqs.map((faq) => (
                   <FaqItem key={faq.q} q={faq.q} a={faq.a} />
                 ))}
@@ -147,17 +116,14 @@ export default function FaqPage() {
             </div>
           ))}
 
-          {/* Still have questions */}
-          <div className="mt-8 rounded-2xl bg-slate-50 border border-slate-100 p-8">
-            <h3 className="text-base font-bold text-slate-900">Still have questions?</h3>
-            <p className="mt-2 text-sm text-slate-500">
-              Our team responds to all inquiries within 2 business hours.
-            </p>
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-8">
+            <h3 className="text-base font-bold text-slate-900">Still have a question?</h3>
+            <p className="mt-2 text-sm text-slate-500">Send us a message and we will get back to you, usually within one business day.</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary text-sm py-2.5 px-5">
-                Contact Us
+              <Link href="/contact" className="btn-primary px-5 py-2.5 text-sm">
+                Contact us
               </Link>
-              <a href={mailHref(BUSINESS_EMAIL)} className="btn-secondary text-sm py-2.5 px-5">
+              <a href={mailHref(BUSINESS_EMAIL)} className="btn-secondary px-5 py-2.5 text-sm">
                 Email us
               </a>
             </div>
@@ -165,21 +131,17 @@ export default function FaqPage() {
         </div>
       </div>
 
-      {/* JSON-LD FAQ schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: FAQ_SECTIONS.flatMap((s) =>
+            mainEntity: sections.flatMap((s) =>
               s.faqs.map((faq) => ({
                 "@type": "Question",
                 name: faq.q,
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: faq.a,
-                },
+                acceptedAnswer: { "@type": "Answer", text: faq.a },
               }))
             ),
           }),
@@ -192,11 +154,11 @@ export default function FaqPage() {
 function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <details className="group py-4">
-      <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
-        <span className="text-sm font-semibold text-slate-900 leading-snug">{q}</span>
-        <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5 transition-transform duration-200 group-open:rotate-180" />
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+        <span className="text-sm font-semibold leading-snug text-slate-900">{q}</span>
+        <ChevronDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
       </summary>
-      <p className="mt-3 text-sm text-slate-600 leading-relaxed">{a}</p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">{a}</p>
     </details>
   );
 }

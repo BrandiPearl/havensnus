@@ -12,7 +12,7 @@ async function sha256Hex(value: string): Promise<string> {
 export async function expectedSessionToken(): Promise<string | null> {
   const password = process.env.ADMIN_PASSWORD;
   if (!password) return null;
-  return sha256Hex(`wonderland-cms:${password}`);
+  return sha256Hex(`havensnus-cms:${password}`);
 }
 
 export async function isValidSession(token: string | undefined): Promise<boolean> {

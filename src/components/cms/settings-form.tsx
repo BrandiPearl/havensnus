@@ -24,6 +24,22 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-sm font-bold text-slate-900 mb-1">Shipping</h2>
+        <p className="text-xs text-slate-500 mb-5">Flat rates in AUD. Set the threshold to 0 to turn free shipping off.</p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field name="shipping_au" label="Australia" defaultValue={String(settings.shipping_au)} type="number" step="0.01" />
+          <Field name="shipping_nz" label="New Zealand" defaultValue={String(settings.shipping_nz)} type="number" step="0.01" />
+          <Field
+            name="free_shipping_threshold"
+            label="Free shipping from"
+            defaultValue={String(settings.free_shipping_threshold)}
+            type="number"
+            step="0.01"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-sm font-bold text-slate-900 mb-5">SEO Defaults</h2>
         <div className="space-y-4">
           <Field name="seo_title" label="Default Meta Title" defaultValue={settings.seo_title} />
@@ -55,16 +71,18 @@ function Field({
   label,
   defaultValue,
   type = "text",
+  step,
 }: {
   name: string;
   label: string;
   defaultValue?: string;
   type?: string;
+  step?: string;
 }) {
   return (
     <div>
       <label className="label">{label}</label>
-      <input name={name} type={type} className="input" defaultValue={defaultValue} />
+      <input name={name} type={type} step={step} min={type === "number" ? "0" : undefined} className="input" defaultValue={defaultValue} />
     </div>
   );
 }

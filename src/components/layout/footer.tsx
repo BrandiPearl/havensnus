@@ -8,35 +8,32 @@ import { mailHref } from "@/lib/utils";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
-    heading: "Catalogue",
+    heading: "Shop",
     links: [
-      { label: "Bounce Houses", href: "/products?category=bounce-houses" },
-      { label: "Water Slides", href: "/products?category=water-slides" },
-      { label: "Combo Units", href: "/products?category=combos" },
-      { label: "Obstacle Courses", href: "/products?category=obstacle-courses" },
-      { label: "Interactive Games", href: "/products?category=interactive" },
-      { label: "Tents & Tables", href: "/products?category=tents-tables" },
+      { label: "All pouches", href: "/products" },
+      { label: "All brands", href: "/brands" },
+      { label: "ZYN", href: "/products?brand=zyn" },
+      { label: "VELO", href: "/products?brand=velo" },
+      { label: "PABLO", href: "/products?brand=pablo" },
+      { label: "Light & regular", href: "/products?strength=light,regular" },
+    ],
+  },
+  {
+    heading: "Help",
+    links: [
+      { label: "Shipping", href: "/shipping" },
+      { label: "Returns", href: "/returns" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Contact", href: "/contact" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { label: "About Us", href: "/about" },
+      { label: "About us", href: "/about" },
       { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "/careers" },
-      { label: "Press", href: "/press" },
-      { label: "Contact", href: "/contact" },
-    ],
-  },
-  {
-    heading: "Support",
-    links: [
-      { label: "Get a Quote", href: "/quote" },
-      { label: "Shipping Info", href: "/shipping" },
-      { label: "Returns & Warranty", href: "/returns" },
-      { label: "Setup Guides", href: "/guides" },
-      { label: "Safety Guidelines", href: "/safety" },
-      { label: "FAQs", href: "/faq" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
     ],
   },
 ];
@@ -52,11 +49,11 @@ export function Footer() {
         <div className="container-wide py-10 lg:py-12">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <h2 className="display-lg max-w-2xl text-white">
-              Ready to start your inflatable business?
+              Every strength. Every flavour. Delivered.
             </h2>
             <div className="flex flex-shrink-0 flex-col gap-3 sm:flex-row">
-              <Link href="/quote" className="btn-primary px-7 py-4">
-                Get a free quote
+              <Link href="/products" className="btn-primary px-7 py-4">
+                Shop all pouches
               </Link>
               <a
                 href={mailHref(settings.email)}
@@ -74,8 +71,8 @@ export function Footer() {
           <div className="lg:col-span-4">
             <Logo variant="light" size="sm" />
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-400">
-              Commercial grade inflatables built for rental businesses, event
-              companies and large-scale events. Manufacturing since 2008.
+              Tobacco-free nicotine pouches from 30+ brands, shipped with
+              tracking to every corner of Australia and New Zealand.
             </p>
 
             <div className="mt-7">
@@ -111,14 +108,14 @@ export function Footer() {
 
           <div className="lg:col-span-2">
             <h3 className="spec mb-5 text-[0.625rem] uppercase tracking-[0.18em] text-white/40">
-              Certification
+              18+ only
             </h3>
             <p className="text-sm leading-relaxed text-slate-400">
-              All units meet ASTM F2374 and CPSC standards. Documentation ships
-              with every order.
+              Nicotine is an addictive chemical. Our products are for adults
+              who already use nicotine, and are not for sale to anyone under 18.
             </p>
             <p className="spec mt-4 text-[0.6875rem] uppercase tracking-[0.14em] text-orange-500">
-              18oz PVC · Lead free
+              Ships to AU · NZ
             </p>
           </div>
         </div>
@@ -127,13 +124,13 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="container-wide flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
           <p className="spec text-[0.6875rem] text-slate-500">
-            &copy; {new Date().getFullYear()} Wonderland Inflatables
+            &copy; {new Date().getFullYear()} Haven Snus
           </p>
           <div className="flex items-center gap-6">
             {[
               { label: "Privacy", href: "/privacy" },
               { label: "Terms", href: "/terms" },
-              { label: "Sitemap", href: "/sitemap.xml" },
+              { label: "Shipping", href: "/shipping" },
             ].map((l) => (
               <Link
                 key={l.href}

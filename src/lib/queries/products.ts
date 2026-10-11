@@ -1,287 +1,244 @@
 /**
- * Product query functions.
- * Falls back to mock data if Supabase credentials are not configured,
- * so the site works fully before credentials are added.
+ * Product and brand queries (anon key, RLS-filtered to active rows).
+ * Returns empty results when Supabase is not configured.
  */
 
-import type { Product, FilterState, Category } from "@/types";
-import { CATEGORIES, FEATURED_PRODUCTS } from "@/lib/data/mock-products";
+import type { Brand, Product, ProductImage } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { selectProductImages } from "@/lib/product-image";
-import {
-  cleanProductDescription,
-  isUsefulFeature,
-  specsFromCopy,
-} from "@/lib/product-copy";
 
-const SUPABASE_CONFIGURED = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL !== "https://placeholder.supabase.co" &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+/** Listing columns: everything a card or filter needs, without the long description. */
+const LIST_SELECT = `id, slug, sku, name, short_description, price, compare_at_price, brand,
+  product_line, tags, strength_mg, strength_level, flavour, flavour_family, pouch_format,
+  pouches_per_tin, stock_quantity, in_stock, is_featured, is_new, created_at, updated_at,
+  brands(name), product_images(id, url, alt, position, is_primary)`;
 
-const PRODUCT_SELECT = `*, product_images(*), product_features(*)`;
+const DETAIL_SELECT = `*, brands(name), product_images(*), product_features(*)`;
 
-// ─── Shape mapper: Supabase row → Product ───────────────────────────────────
+async function db() {
+  const { createClient } = await import("@/lib/supabase/server");
+  return createClient();
+}
+
+function text(value: unknown) {
+  return value == null ? undefined : String(value);
+}
 
 function mapRow(row: Record<string, unknown>): Product {
-  const sku = String(row.sku ?? "");
   const images = selectProductImages(
-    ((row.product_images as Record<string, unknown>[]) ?? []).map((img) => ({
-      id: String(img.id ?? ""),
-      url: String(img.url ?? ""),
-      alt: String(img.alt ?? ""),
-      position: Number(img.position ?? 0),
-      is_primary: Boolean(img.is_primary),
-    })),
-    sku
+    ((row.product_images as Record<string, unknown>[]) ?? []).map(
+      (img): ProductImage => ({
+        id: String(img.id ?? ""),
+        url: String(img.url ?? ""),
+        alt: String(img.alt ?? ""),
+        position: Number(img.position ?? 0),
+        is_primary: Boolean(img.is_primary),
+      })
+    )
   );
 
   const features = ((row.product_features as Record<string, unknown>[]) ?? [])
     .sort((a, b) => Number(a.position) - Number(b.position))
-    .map((f) => String(f.feature ?? "").replace(/\s+/g, " ").trim())
-    .filter(isUsefulFeature);
+    .map((f) => String(f.feature ?? "").trim())
+    .filter(Boolean);
 
-  const name = String(row.name ?? "");
-  const description = cleanProductDescription(String(row.description ?? ""), name);
-  const shortRaw = cleanProductDescription(String(row.short_description ?? ""), name);
-  const short_description = (shortRaw || description).slice(0, 220);
-
-  const specs = specsFromCopy(
-    {
-      length: row.spec_length ? String(row.spec_length) : undefined,
-      width: row.spec_width ? String(row.spec_width) : undefined,
-      height: row.spec_height ? String(row.spec_height) : undefined,
-      weight: row.spec_weight ? String(row.spec_weight) : undefined,
-      capacity: row.spec_capacity ? String(row.spec_capacity) : undefined,
-      blower: row.spec_blower ? String(row.spec_blower) : undefined,
-      material: row.spec_material ? String(row.spec_material) : undefined,
-      setup_time: row.spec_setup_time ? String(row.spec_setup_time) : undefined,
-      age_range: row.spec_age_range ? String(row.spec_age_range) : undefined,
-      outlet_required: row.spec_outlet ? String(row.spec_outlet) : undefined,
-    },
-    name,
-    features,
-    description
-  );
+  const brand = row.brands as { name?: string } | null;
 
   return {
     id: String(row.id ?? ""),
     slug: String(row.slug ?? ""),
-    sku,
-    name,
-    description,
-    short_description,
+    sku: String(row.sku ?? ""),
+    name: String(row.name ?? ""),
+    description: String(row.description ?? ""),
+    short_description: String(row.short_description ?? ""),
     price: Number(row.price ?? 0),
     compare_at_price: row.compare_at_price ? Number(row.compare_at_price) : undefined,
-    category: (row.category as Product["category"]) ?? "other",
-    subcategory: row.subcategory ? String(row.subcategory) : undefined,
+    brand: text(row.brand),
+    brand_name: brand?.name ?? undefined,
+    product_line: text(row.product_line),
     tags: (row.tags as string[]) ?? [],
     images,
-    specs,
     features,
+    strength_mg: row.strength_mg != null ? Number(row.strength_mg) : undefined,
+    strength_level: text(row.strength_level),
+    flavour: text(row.flavour),
+    flavour_family: text(row.flavour_family),
+    pouch_format: text(row.pouch_format),
+    pouches_per_tin: row.pouches_per_tin != null ? Number(row.pouches_per_tin) : undefined,
+    stock_quantity: row.stock_quantity != null ? Number(row.stock_quantity) : undefined,
+    in_stock: Boolean(row.in_stock),
     is_featured: Boolean(row.is_featured),
     is_new: Boolean(row.is_new),
-    in_stock: Boolean(row.in_stock),
-    rental_available: Boolean(row.rental_available),
-    purchase_available: Boolean(row.purchase_available),
     created_at: String(row.created_at ?? ""),
     updated_at: String(row.updated_at ?? ""),
+    seo: row.seo_title
+      ? {
+          title: String(row.seo_title),
+          description: text(row.seo_description),
+          keywords: (row.seo_keywords as string[]) ?? undefined,
+        }
+      : undefined,
   };
 }
 
-// ─── Get featured products ───────────────────────────────────────────────────
-
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  if (!SUPABASE_CONFIGURED) {
-    return FEATURED_PRODUCTS.filter((p) => p.is_featured).slice(0, limit);
-  }
-
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(LIST_SELECT)
     .eq("is_active", true)
     .eq("is_featured", true)
+    .eq("in_stock", true)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) {
     console.error("getFeaturedProducts:", error.message);
-    return FEATURED_PRODUCTS.slice(0, limit);
+    return [];
   }
-
-  let mapped = (data ?? []).map(mapRow).filter((p) => p.images.length > 0);
-
-  if (mapped.length === 0) {
-    const fallback = await supabase
-      .from("products")
-      .select(PRODUCT_SELECT)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(Math.max(limit * 4, 24));
-
-    mapped = (fallback.data ?? [])
-      .map((row) => mapRow(row as Record<string, unknown>))
-      .filter((p) => p.images.length > 0);
-  }
-
-  return mapped.slice(0, limit);
+  return (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
 }
 
-// ─── Get all products (with filtering) ──────────────────────────────────────
-
-export async function getProducts(filters: FilterState = {}): Promise<Product[]> {
-  if (!SUPABASE_CONFIGURED) {
-    let products = [...FEATURED_PRODUCTS];
-    if (filters.category) products = products.filter((p) => p.category === filters.category);
-    if (filters.inStock) products = products.filter((p) => p.in_stock);
-    if (filters.priceMin) products = products.filter((p) => p.price >= filters.priceMin!);
-    if (filters.priceMax) products = products.filter((p) => p.price <= filters.priceMax!);
-    return products;
-  }
-
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-
-  let query = supabase
-    .from("products")
-    .select(PRODUCT_SELECT)
-    .eq("is_active", true)
-    .limit(2000);
-
-  if (filters.category) query = query.eq("category", filters.category);
-  if (filters.inStock) query = query.eq("in_stock", true);
-  if (filters.priceMin) query = query.gte("price", filters.priceMin);
-  if (filters.priceMax) query = query.lte("price", filters.priceMax);
-
-  switch (filters.sort) {
-    case "price-asc": query = query.order("price", { ascending: true }); break;
-    case "price-desc": query = query.order("price", { ascending: false }); break;
-    case "newest": query = query.order("created_at", { ascending: false }); break;
-    case "az": query = query.order("name", { ascending: true }); break;
-    case "za": query = query.order("name", { ascending: false }); break;
-    default: query = query.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("getProducts:", error.message);
-    return FEATURED_PRODUCTS;
-  }
-
-  return (data ?? []).map(mapRow);
-}
-
-// ─── Get single product by slug ──────────────────────────────────────────────
-
-export async function getProductBySlug(slug: string): Promise<Product | null> {
-  if (!SUPABASE_CONFIGURED) {
-    return FEATURED_PRODUCTS.find((p) => p.slug === slug) ?? null;
-  }
-
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+/** Whole active catalogue; the shop page filters client-side. */
+export async function getProducts(): Promise<Product[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
 
   const { data, error } = await supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(LIST_SELECT)
+    .eq("is_active", true)
+    .order("in_stock", { ascending: false })
+    .order("is_featured", { ascending: false })
+    .order("name", { ascending: true })
+    .limit(2000);
+
+  if (error) {
+    console.error("getProducts:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await db();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(DETAIL_SELECT)
     .eq("slug", slug)
     .eq("is_active", true)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   return mapRow(data as Record<string, unknown>);
 }
 
-// ─── Get related products ────────────────────────────────────────────────────
+/** Same brand first (in stock), then same flavour family. */
+export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
 
-export async function getRelatedProducts(
-  productId: string,
-  category: string,
-  limit = 3
-): Promise<Product[]> {
-  if (!SUPABASE_CONFIGURED) {
-    return FEATURED_PRODUCTS.filter(
-      (p) => p.id !== productId && p.category === category
-    ).slice(0, limit);
+  const base = () =>
+    supabase
+      .from("products")
+      .select(LIST_SELECT)
+      .eq("is_active", true)
+      .eq("in_stock", true)
+      .neq("id", product.id)
+      .limit(limit);
+
+  const sameBrand = product.brand ? (await base().eq("brand", product.brand)).data ?? [] : [];
+  let rows = sameBrand;
+  if (rows.length < limit && product.flavour_family) {
+    const seen = new Set(rows.map((r) => r.id));
+    const more = (await base().eq("flavour_family", product.flavour_family)).data ?? [];
+    rows = [...rows, ...more.filter((r) => !seen.has(r.id))];
   }
-
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("products")
-    .select(PRODUCT_SELECT)
-    .eq("is_active", true)
-    .eq("category", category)
-    .neq("id", productId)
-    .limit(limit);
-
-  if (error) return [];
-  return (data ?? []).map(mapRow);
+  return rows.slice(0, limit).map((row) => mapRow(row as Record<string, unknown>));
 }
 
-export async function getCategories(): Promise<Category[]> {
-  if (!SUPABASE_CONFIGURED) return CATEGORIES;
+/** Active brands with product counts and a cover image from an in-stock product. */
+export async function getBrands(): Promise<Brand[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
 
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select("category, sku, product_images(url, is_primary, position)")
-    .eq("is_active", true)
-    .limit(2000);
+  const [brandsRes, productsRes] = await Promise.all([
+    supabase
+      .from("brands")
+      .select("id, name, slug, description, logo_url, image_url, position, is_featured")
+      .eq("is_active", true)
+      .order("position", { ascending: true }),
+    supabase
+      .from("products")
+      .select("brand, in_stock, product_images(url, is_primary, position)")
+      .eq("is_active", true)
+      .limit(2000),
+  ]);
 
-  if (error || !data) {
-    console.error("getCategories:", error?.message);
-    return CATEGORIES;
+  if (brandsRes.error) {
+    console.error("getBrands:", brandsRes.error.message);
+    return [];
   }
 
   const counts: Record<string, number> = {};
   const covers: Record<string, string> = {};
-
-  for (const row of data) {
-    const cat = String(row.category);
-    counts[cat] = (counts[cat] ?? 0) + 1;
-    if (covers[cat]) continue;
-    const images = selectProductImages(
-      ((row.product_images as Record<string, unknown>[]) ?? []).map((img) => ({
-        id: "",
-        url: String(img.url ?? ""),
-        alt: "",
-        position: Number(img.position ?? 0),
-        is_primary: Boolean(img.is_primary),
-      })),
-      String(row.sku ?? "")
-    );
-    if (images[0]?.url) covers[cat] = images[0].url;
+  for (const row of productsRes.data ?? []) {
+    const slug = String(row.brand ?? "");
+    counts[slug] = (counts[slug] ?? 0) + 1;
+    if (covers[slug] || !row.in_stock) continue;
+    const images = (row.product_images as { url: string; is_primary: boolean; position: number }[]) ?? [];
+    const primary = images.find((i) => i.is_primary) ?? images[0];
+    if (primary?.url) covers[slug] = primary.url;
   }
 
-  return CATEGORIES.map((cat) => ({
-    ...cat,
-    product_count: counts[cat.slug] ?? 0,
-    image_url: covers[cat.slug] || cat.image_url,
-  }));
+  return (brandsRes.data ?? [])
+    .map((row) => ({
+      id: String(row.id),
+      name: String(row.name),
+      slug: String(row.slug),
+      description: text(row.description),
+      logo_url: text(row.logo_url),
+      image_url: text(row.image_url) ?? covers[String(row.slug)],
+      position: Number(row.position ?? 0),
+      is_featured: Boolean(row.is_featured),
+      product_count: counts[String(row.slug)] ?? 0,
+    }))
+    .filter((b) => b.product_count > 0);
 }
 
 export async function getProductSlugs(): Promise<{ slug: string; updated_at: string }[]> {
-  if (!SUPABASE_CONFIGURED) {
-    return FEATURED_PRODUCTS.map((p) => ({ slug: p.slug, updated_at: p.updated_at }));
-  }
-
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
   const { data, error } = await supabase
     .from("products")
     .select("slug, updated_at")
     .eq("is_active", true)
     .limit(2000);
 
-  if (error || !data) return FEATURED_PRODUCTS.map((p) => ({ slug: p.slug, updated_at: p.updated_at }));
+  if (error || !data) return [];
   return data.map((row) => ({
     slug: String(row.slug),
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   }));
+}
+
+export type NavBrand = { name: string; slug: string };
+
+/** Featured brands for the header menu (cheap: no product scan). */
+export async function getNavBrands(limit = 12): Promise<NavBrand[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from("brands")
+    .select("name, slug")
+    .eq("is_active", true)
+    .order("is_featured", { ascending: false })
+    .order("position", { ascending: true })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []).map((row) => ({ name: String(row.name), slug: String(row.slug) }));
 }

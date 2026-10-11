@@ -4,7 +4,7 @@ import { BUSINESS_EMAIL } from "@/lib/contact-info";
 
 function fromAddress() {
   const user = process.env.SMTP_USER || BUSINESS_EMAIL;
-  return process.env.MAIL_FROM || `Wonderland Inflatables <${user}>`;
+  return process.env.MAIL_FROM || `Haven Snus <${user}>`;
 }
 
 export function staffInbox() {
@@ -59,14 +59,14 @@ export async function sendMail(options: {
 export function emailShell(title: string, bodyHtml: string) {
   return `<!doctype html>
 <html>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:24px 12px;">
+<body style="margin:0;padding:0;background:#f6f8f9;font-family:Arial,sans-serif;color:#131a20;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f8f9;padding:24px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #dce2e6;">
           <tr>
-            <td style="background:#ea580c;padding:18px 24px;color:#ffffff;font-size:18px;font-weight:700;">
-              Wonderland Inflatables
+            <td style="background:#131a20;padding:18px 24px;color:#ffffff;font-size:18px;font-weight:700;">
+              Haven <span style="color:#3fb39b;">Snus</span>
             </td>
           </tr>
           <tr>
@@ -74,7 +74,8 @@ export function emailShell(title: string, bodyHtml: string) {
               <h1 style="margin:0 0 16px;font-size:20px;">${title}</h1>
               ${bodyHtml}
               <p style="margin:24px 0 0;font-size:13px;color:#64748b;">
-                Wonderland Inflatables · ${BUSINESS_EMAIL}
+                Haven Snus · havensnus.com · ${BUSINESS_EMAIL}<br />
+                Nicotine products are for adults 18+ only.
               </p>
             </td>
           </tr>

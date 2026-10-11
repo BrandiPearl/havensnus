@@ -70,11 +70,11 @@ export function ContactForm() {
           <label className="label" htmlFor="subject">Subject *</label>
           <select id="subject" name="subject" required className="input" value={form.subject} onChange={handleChange}>
             <option value="">Select a topic</option>
-            <option>Product Questions</option>
-            <option>Order Status</option>
-            <option>Shipping & Delivery</option>
-            <option>Returns & Warranty</option>
-            <option>Partnership Inquiry</option>
+            <option>Product question</option>
+            <option>Order status</option>
+            <option>Shipping & delivery</option>
+            <option>Returns</option>
+            <option>Wholesale</option>
             <option>Other</option>
           </select>
         </div>

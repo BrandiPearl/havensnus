@@ -6,7 +6,7 @@ import { getSiteSettings } from "@/lib/queries/settings";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with Wonderland Inflatables. Email us or send a message. Our team is here to help with product questions, orders, and support.",
+    "Get in touch with Haven Snus about products, strengths, orders or delivery.",
 };
 
 export default async function ContactPage() {
@@ -18,7 +18,7 @@ export default async function ContactPage() {
         <div className="container-wide py-12">
           <h1 className="text-3xl font-bold text-slate-900">Contact Us</h1>
           <p className="mt-2 text-slate-500 text-sm">
-            We'd love to hear from you. Our team responds within 2 business hours.
+            Questions about a flavour, a strength or an order? We usually reply within one business day.
           </p>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default async function ContactPage() {
               <div className="space-y-4">
                 {[
                   { icon: Mail, label: settings.email, sub: "Best way to reach us", href: `mailto:${settings.email}` },
-                  { icon: Clock, label: "Mon-Fri, 8am-6pm PST", sub: "Business hours", href: null },
+                  { icon: Clock, label: "Mon–Fri, 9am–5pm AEST", sub: "Support hours", href: null },
                 ].map(({ icon: Icon, label, sub, href }) => (
                   <div key={label} className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -56,13 +56,12 @@ export default async function ContactPage() {
             </div>
 
             <div className="bg-slate-900 rounded-xl p-6 text-white">
-              <h3 className="text-sm font-bold mb-2">Looking for a quote?</h3>
+              <h3 className="text-sm font-bold mb-2">Asking about an order?</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                For detailed product quotes and rental business consultations, use our
-                dedicated quote form, it helps us give you the most accurate pricing.
+                Include your order reference (it starts with HS-) so we can find it straight away.
               </p>
-              <a href="/quote" className="mt-4 inline-flex items-center text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
-                Go to Quote Form →
+              <a href="/faq" className="mt-4 inline-flex items-center text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
+                Read the FAQ →
               </a>
             </div>
           </div>

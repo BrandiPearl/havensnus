@@ -1,85 +1,59 @@
 import type { Metadata } from "next";
 import { InfoPage, InfoSection } from "@/components/layout/info-page";
-import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
-  description: "Terms of service for purchasing and using Wonderland Inflatables products and website.",
+  title: "Terms & Conditions",
+  description: "The terms that apply when you use havensnus.com and place an order.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {
   return (
     <InfoPage
       eyebrow="Legal"
-      title="Terms of Service"
-      intro="Last updated August 18, 2026. By using this website or placing an order, you agree to these terms."
+      title="Terms & Conditions"
+      intro="By using havensnus.com or placing an order, you agree to these terms."
     >
-      <InfoSection title="Orders and pricing">
+      <InfoSection title="Age requirement">
         <p>
-          Product prices are listed in US dollars and do not include freight unless
-          noted. Quotes are valid for 14 days unless otherwise stated. We may refuse
-          or cancel an order if a product is listed at an obvious error price, is out
-          of stock, or if we cannot verify payment.
+          You must be 18 or older to use this site and to buy from us. By placing an order you confirm that
+          you are of legal age to buy nicotine products where you live.
         </p>
       </InfoSection>
 
-      <InfoSection title="Payment">
+      <InfoSection title="Your responsibility">
         <p>
-          Payment is due before shipment unless we have agreed to other terms in
-          writing. Financing, if offered, is provided by third-party partners and is
-          subject to their approval and agreements.
+          You are responsible for making sure that importing and using nicotine products is permitted where
+          your order is delivered. For Australian deliveries this includes holding a valid prescription.
         </p>
       </InfoSection>
 
-      <InfoSection title="Shipping and risk of loss">
+      <InfoSection title="Orders and payment">
+        <ul>
+          <li>Prices are in Australian dollars and include GST where applicable.</li>
+          <li>Placing an order is an offer to buy. We accept it when we confirm payment.</li>
+          <li>We may cancel an order, with a full refund of any payment, if a product is unavailable or we cannot lawfully supply it.</li>
+        </ul>
+      </InfoSection>
+
+      <InfoSection title="Delivery and returns">
         <p>
-          Title and risk of loss pass to you when the carrier picks up the order from
-          our warehouse, unless we agree otherwise. Inspect freight on delivery and
-          note damage on the bill of lading. See our Shipping and Returns pages for
-          the process.
+          Delivery is covered on our Shipping page and returns on our Returns page. Both form part of these
+          terms.
         </p>
       </InfoSection>
 
-      <InfoSection title="Warranty">
+      <InfoSection title="Health warning">
         <p>
-          Products are covered by our 1-year limited commercial warranty as described
-          on the Returns & Warranty page. Except for that warranty, products are sold
-          as-is to the fullest extent allowed by law.
+          Nicotine is a highly addictive substance. Our products are not intended for people who do not
+          already use nicotine, or for anyone who is pregnant or breastfeeding.
         </p>
       </InfoSection>
 
-      <InfoSection title="Website use">
+      <InfoSection title="Consumer law">
         <p>
-          You may not scrape, copy, or republish our catalog, photos, or content
-          without written permission, except as allowed by law. Product images and
-          descriptions are for shopping on this site.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Limitation of liability">
-        <p>
-          To the fullest extent permitted by law, Wonderland Inflatables is not
-          liable for indirect, incidental, or consequential damages, including lost
-          rental revenue. Our total liability for any claim related to an order is
-          limited to the amount you paid for the product at issue.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Governing law">
-        <p>
-          These terms are governed by the laws of the State of California, without
-          regard to conflict of law rules. Disputes will be resolved in the state or
-          federal courts located in San Bernardino County, California.
-        </p>
-      </InfoSection>
-
-      <InfoSection title="Contact">
-        <p>
-          Questions about these terms:{" "}
-          <a href={mailHref(BUSINESS_EMAIL)} className="text-orange-600 font-medium">
-            {BUSINESS_EMAIL}
-          </a>
-          .
+          Nothing in these terms excludes rights you have under the Australian Consumer Law or the New
+          Zealand Consumer Guarantees Act.
         </p>
       </InfoSection>
     </InfoPage>

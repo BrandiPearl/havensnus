@@ -22,8 +22,8 @@ export function TestimonialForm({ testimonial }: { testimonial?: AdminTestimonia
           <Field label="Location">
             <input name="location" className="input" defaultValue={testimonial?.location} />
           </Field>
-          <Field label="Event type">
-            <input name="event_type" className="input" defaultValue={testimonial?.event_type} />
+          <Field label="Product bought">
+            <input name="product" className="input" placeholder="e.g. ZYN Cool Mint 6mg" defaultValue={testimonial?.product} />
           </Field>
           <Field label="Rating">
             <select name="rating" className="input" defaultValue={String(testimonial?.rating ?? 5)}>

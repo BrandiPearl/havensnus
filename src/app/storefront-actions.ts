@@ -1,170 +1,142 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import type { CartOrderInput, QuoteFormInput } from "@/lib/queries/quote";
 import { sendMail, staffInbox, isMailConfigured } from "@/lib/email/mailer";
 import {
   contactCustomerEmail,
   contactStaffEmail,
   orderCustomerEmail,
   orderStaffEmail,
-  quoteCustomerEmail,
-  quoteStaffEmail,
 } from "@/lib/email/templates";
 import { BUSINESS_EMAIL } from "@/lib/contact-info";
+import { getSiteSettings } from "@/lib/queries/settings";
+import { shippingFor } from "@/lib/shipping";
+import { MAX_QTY_PER_LINE, createOrderReference, type OrderInput } from "@/lib/orders";
 
-function usd(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(amount);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function clean(value: unknown, max = 200) {
+  return String(value ?? "").trim().slice(0, max);
 }
 
-function mailNotReady() {
-  return {
-    success: false,
-    error: `Email is not sending right now. Write to ${BUSINESS_EMAIL} and we will help you directly.`,
-  };
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
 }
 
-async function sendPair(
-  customer: { to: string; subject: string; html: string; text: string },
-  staff: { to: string; subject: string; html: string; text: string; replyTo?: string }
-) {
-  if (!isMailConfigured()) return mailNotReady();
-  const results = await Promise.all([sendMail(customer), sendMail(staff)]);
-  if (results.every((result) => !result.sent)) return mailNotReady();
-  return { success: true as const };
-}
-
-async function db() {
-  const admin = createAdminClient();
-  if (admin) return admin;
-  if (!isSupabaseConfigured()) return null;
-  const { createClient } = await import("@/lib/supabase/server");
-  return createClient();
-}
-
-export async function submitCartOrder(
-  data: CartOrderInput
+export async function submitOrder(
+  input: OrderInput
 ): Promise<{ success: boolean; error?: string; reference?: string }> {
-  if (!isMailConfigured()) return mailNotReady();
-  const lines = data.items.map(
-    (item) => `${item.qty} x ${item.sku} ${item.name} ($${item.price.toLocaleString("en-US")})`
-  );
-  const subtotal = data.items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const message = [
-    `Order ${data.reference}`,
-    data.company ? `Company: ${data.company}` : "",
-    "",
-    "Items:",
-    ...lines,
-    "",
-    `Subtotal: $${subtotal.toLocaleString("en-US")}`,
-    data.local_total ? `Local estimate: ${data.local_total}` : "",
-    data.notes ? `\nNotes:\n${data.notes}` : "",
-  ]
-    .filter((line) => line !== "")
-    .join("\n");
-
-  const client = await db();
-  if (client) {
-    const { error } = await client.from("quote_requests").insert({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      email: data.email,
-      phone: data.phone,
-      event_type: "Purchase",
-      event_address: data.address || null,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      guests_count: String(data.items.reduce((sum, item) => sum + item.qty, 0)),
-      products_interested: lines,
-      budget: String(subtotal),
-      message,
-      how_did_you_hear: data.how_did_you_hear || null,
-      status: "pending",
-    });
-    if (error) return { success: false, error: error.message };
+  const admin = createAdminClient();
+  if (!admin) {
+    return { success: false, error: `Checkout is unavailable right now. Email ${BUSINESS_EMAIL} to order.` };
   }
 
-  const name = `${data.first_name} ${data.last_name}`.trim();
-  const address = [data.address, data.city, data.state, data.zip].filter(Boolean).join(", ");
-  const customer = orderCustomerEmail({
-    name: data.first_name,
-    reference: data.reference,
-    items: lines,
-    subtotalUsd: usd(subtotal),
-    localTotal: data.local_total,
-    address,
-  });
-  const staff = orderStaffEmail({
-    reference: data.reference,
-    name,
-    email: data.email,
-    phone: data.phone,
-    items: lines,
-    subtotalUsd: usd(subtotal),
-    address,
-    notes: data.notes,
-  });
+  const customer = {
+    first_name: clean(input.first_name, 80),
+    last_name: clean(input.last_name, 80),
+    email: clean(input.email, 200).toLowerCase(),
+    phone: clean(input.phone, 40),
+    address_line1: clean(input.address_line1),
+    address_line2: clean(input.address_line2) || null,
+    suburb: clean(input.suburb, 100),
+    state: clean(input.state, 60),
+    postcode: clean(input.postcode, 10),
+    notes: clean(input.notes, 2000) || null,
+  };
+  const country = input.country === "NZ" ? "NZ" : input.country === "AU" ? "AU" : null;
 
-  const mailed = await sendPair(
-    { to: data.email, ...customer },
-    { to: staffInbox(), ...staff, replyTo: data.email }
-  );
-  if (!mailed.success) return mailed;
-
-  return { success: true, reference: data.reference };
-}
-
-export async function submitQuoteRequest(
-  data: QuoteFormInput
-): Promise<{ success: boolean; error?: string }> {
-  if (!isMailConfigured()) return mailNotReady();
-  const client = await db();
-  if (client) {
-    const { error } = await client.from("quote_requests").insert({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      email: data.email,
-      phone: data.phone,
-      event_date: data.event_date || null,
-      event_type: data.event_type,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      guests_count: data.guests_count,
-      products_interested: data.products_interested ?? [],
-      message: data.message,
-      how_did_you_hear: data.how_did_you_hear || null,
-      status: "pending",
-    });
-    if (error) return { success: false, error: error.message };
+  if (!country) return { success: false, error: "We currently ship to Australia and New Zealand only." };
+  if (!customer.first_name || !customer.last_name) return { success: false, error: "Enter your full name." };
+  if (!EMAIL_RE.test(customer.email)) return { success: false, error: "Enter a valid email address." };
+  if (!customer.phone) return { success: false, error: "Enter a phone number for the courier." };
+  if (!customer.address_line1 || !customer.suburb || !customer.postcode) {
+    return { success: false, error: "Enter your full delivery address." };
+  }
+  if (!/^\d{4}$/.test(customer.postcode)) {
+    return { success: false, error: "Postcodes are 4 digits in Australia and New Zealand." };
+  }
+  if (!input.age_confirmed) return { success: false, error: "Please confirm you are 18 or older." };
+  if (country === "AU" && !input.prescription_confirmed) {
+    return { success: false, error: "Australian orders require confirmation that you hold a valid prescription." };
   }
 
-  const name = `${data.first_name} ${data.last_name}`.trim();
-  const customer = quoteCustomerEmail({ name: data.first_name, eventType: data.event_type });
-  const staff = quoteStaffEmail({
-    name,
-    email: data.email,
-    phone: data.phone,
-    eventType: data.event_type,
-    city: [data.city, data.state].filter(Boolean).join(", "),
-    message: data.message,
-    products: data.products_interested ?? [],
+  // Merge duplicate lines and clamp quantities; prices always come from the database.
+  const qtyById = new Map<string, number>();
+  for (const item of input.items ?? []) {
+    const qty = Math.floor(Number(item.qty));
+    if (!item.id || !Number.isFinite(qty) || qty <= 0) continue;
+    qtyById.set(item.id, Math.min(MAX_QTY_PER_LINE, (qtyById.get(item.id) ?? 0) + qty));
+  }
+  if (qtyById.size === 0) return { success: false, error: "Your cart is empty." };
+
+  const { data: rows, error: productError } = await admin
+    .from("products")
+    .select("id, name, sku, price, in_stock, is_active")
+    .in("id", [...qtyById.keys()]);
+  if (productError) return { success: false, error: "Could not check stock. Please try again." };
+
+  const items = [];
+  for (const [id, qty] of qtyById) {
+    const row = rows?.find((r) => r.id === id);
+    if (!row || !row.is_active) return { success: false, error: "An item in your cart is no longer available. Please remove it and try again." };
+    if (!row.in_stock) return { success: false, error: `${row.name} has just sold out. Please remove it to continue.` };
+    items.push({ id, sku: String(row.sku), name: String(row.name), qty, price: Number(row.price) });
+  }
+
+  const settings = await getSiteSettings();
+  const subtotal = round2(items.reduce((sum, i) => sum + i.price * i.qty, 0));
+  const shipping = round2(shippingFor(subtotal, country, settings));
+  const total = round2(subtotal + shipping);
+  const reference = createOrderReference();
+
+  const { error: insertError } = await admin.from("orders").insert({
+    reference,
+    ...customer,
+    state: customer.state || null,
+    country,
+    items: items.map(({ sku, name, qty, price }) => ({ sku, name, qty, price })),
+    item_count: items.reduce((sum, i) => sum + i.qty, 0),
+    subtotal,
+    shipping,
+    total,
+    currency: "AUD",
+    display_total: clean(input.display_total, 40) || null,
+    age_confirmed: true,
+    internal_notes: country === "AU" ? "Customer confirmed a valid prescription at checkout." : null,
+    status: "pending",
   });
+  if (insertError) {
+    console.error("submitOrder insert:", insertError.message);
+    return { success: false, error: "Could not place your order. Please try again." };
+  }
 
-  const mailed = await sendPair(
-    { to: data.email, ...customer },
-    { to: staffInbox(), ...staff, replyTo: data.email }
-  );
-  if (!mailed.success) return mailed;
+  // The order is saved; email is best-effort so a mail outage never loses an order.
+  if (isMailConfigured()) {
+    const address = [customer.address_line1, customer.address_line2, customer.suburb, customer.state, customer.postcode, country === "AU" ? "Australia" : "New Zealand"]
+      .filter(Boolean)
+      .join(", ");
+    const data = {
+      reference,
+      firstName: customer.first_name,
+      name: `${customer.first_name} ${customer.last_name}`,
+      email: customer.email,
+      phone: customer.phone,
+      address,
+      country,
+      items,
+      subtotal,
+      shipping,
+      total,
+      displayTotal: clean(input.display_total, 40) || undefined,
+      notes: customer.notes ?? undefined,
+    } as const;
+    await Promise.all([
+      sendMail({ to: customer.email, ...orderCustomerEmail(data) }),
+      sendMail({ to: staffInbox(), ...orderStaffEmail(data), replyTo: customer.email }),
+    ]);
+  }
 
-  return { success: true };
+  return { success: true, reference };
 }
 
 export async function submitContactMessage(data: {
@@ -174,28 +146,41 @@ export async function submitContactMessage(data: {
   subject?: string;
   message: string;
 }): Promise<{ success: boolean; error?: string }> {
-  if (!isMailConfigured()) return mailNotReady();
-  const client = await db();
-  if (client) {
-    const { error } = await client.from("contact_messages").insert({
-      name: data.name,
-      email: data.email,
-      phone: data.phone ?? null,
-      subject: data.subject ?? null,
-      message: data.message,
-      status: "new",
-    });
-    if (error) return { success: false, error: error.message };
+  const message = {
+    name: clean(data.name, 120),
+    email: clean(data.email, 200),
+    phone: clean(data.phone, 40) || null,
+    subject: clean(data.subject, 200) || null,
+    message: clean(data.message, 5000),
+  };
+  if (!message.name || !EMAIL_RE.test(message.email) || !message.message) {
+    return { success: false, error: "Please fill in your name, a valid email and a message." };
   }
 
-  const customer = contactCustomerEmail({ name: data.name });
-  const staff = contactStaffEmail(data);
+  const admin = createAdminClient();
+  if (admin) {
+    const { error } = await admin.from("contact_messages").insert({ ...message, status: "new" });
+    if (error) {
+      console.error("submitContactMessage:", error.message);
+      return { success: false, error: "Could not send your message. Please try again." };
+    }
+  } else if (!isMailConfigured()) {
+    return { success: false, error: `Messaging is unavailable right now. Email ${BUSINESS_EMAIL} instead.` };
+  }
 
-  const mailed = await sendPair(
-    { to: data.email, ...customer },
-    { to: staffInbox(), ...staff, replyTo: data.email }
-  );
-  if (!mailed.success) return mailed;
+  if (isMailConfigured()) {
+    const details = {
+      name: message.name,
+      email: message.email,
+      phone: message.phone ?? undefined,
+      subject: message.subject ?? undefined,
+      message: message.message,
+    };
+    await Promise.all([
+      sendMail({ to: message.email, ...contactCustomerEmail({ name: message.name }) }),
+      sendMail({ to: staffInbox(), ...contactStaffEmail(details), replyTo: message.email }),
+    ]);
+  }
 
   return { success: true };
 }

@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Haven Snus
 
-## Getting Started
+Storefront and CMS for havensnus.com: tobacco-free nicotine pouches for Australia and New Zealand.
+Next.js 16 on Cloudflare Workers (OpenNext), Supabase for data, Cloudflare R2 for product images.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Copy `.dev.vars.example` to `.env.local` and fill it in.
+2. Run `supabase/schema.sql` once in the Supabase SQL editor.
+3. `npm install`, then `npm run import` to load the catalogue.
+4. `npm run dev` and open http://localhost:3000. The CMS is at `/admin`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Product import
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`scripts/import-products.ts` pulls the catalogue from snusdownunder.com, converts images to WebP
+(max 1000px) in R2, and upserts brands, products, images and features. Re-running it updates
+products in place, matched on `(source_site, source_id)`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run import` fetches and imports
+- `npm run import:dry` fetches and prints a summary only
+- `npm run import:cache` re-imports the last fetch
 
-## Learn More
+## How it works
 
-To learn more about Next.js, take a look at the following resources:
+- Prices are stored in AUD. NZ visitors see NZD at the daily rate from `/api/rates`.
+- Checkout records an order in `orders` (no online payment). Prices and shipping are recalculated
+  on the server. Staff mark orders paid and shipped in `/admin/orders`, which emails the customer.
+- Shipping rates and the free-shipping threshold are edited in `/admin/settings`.
+- Visitors confirm they are 18+ on first visit (`hs_age_ok` cookie). Australian orders also
+  confirm a valid prescription at checkout.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm run deploy` builds with OpenNext and deploys the `havensnus` Worker. Set the same variables
+as `.dev.vars.example` (except the `R2_*` ones) in the Cloudflare dashboard.

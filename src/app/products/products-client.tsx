@@ -1,158 +1,207 @@
 "use client";
 
-import { useState, useMemo, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X, Search } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
+import { StrengthDots } from "@/components/ui/strength-dots";
 import { cn } from "@/lib/utils";
-import { useCurrency } from "@/components/currency/currency-provider";
-import type { Category, FilterState, Product, ProductCategory } from "@/types";
+import { STRENGTH_LEVELS, facetSlug, strengthRank } from "@/lib/catalog";
+import type { Brand, FilterState, Product, SortOption } from "@/types";
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "featured", label: "Featured" },
-  { value: "price-asc", label: "Price: Low to High" },
-  { value: "price-desc", label: "Price: High to Low" },
+  { value: "strength-asc", label: "Strength: low to high" },
+  { value: "strength-desc", label: "Strength: high to low" },
+  { value: "price-asc", label: "Price: low to high" },
+  { value: "price-desc", label: "Price: high to low" },
   { value: "newest", label: "Newest" },
-  { value: "az", label: "A-Z" },
-  { value: "za", label: "Z-A" },
-] as const;
+  { value: "az", label: "A–Z" },
+];
 
-export function ProductsClient({
-  products: catalog,
-  categories,
-}: {
-  products: Product[];
-  categories: Category[];
-}) {
+const PAGE_SIZE = 48;
+
+type Facet = { value: string; label: string; count: number };
+
+function listParam(params: URLSearchParams, key: string) {
+  return (params.get(key) ?? "").split(",").map((v) => v.trim()).filter(Boolean);
+}
+
+function filtersFromParams(params: URLSearchParams): FilterState {
+  const sort = params.get("sort") as SortOption | null;
+  return {
+    brands: listParam(params, "brand"),
+    strengths: listParam(params, "strength"),
+    flavours: listParam(params, "flavour"),
+    formats: listParam(params, "format"),
+    inStock: params.get("stock") === "1",
+    search: params.get("q") || undefined,
+    sort: sort && SORT_OPTIONS.some((o) => o.value === sort) ? sort : "featured",
+  };
+}
+
+function paramsFromFilters(f: FilterState) {
+  const params = new URLSearchParams();
+  if (f.brands.length) params.set("brand", f.brands.join(","));
+  if (f.strengths.length) params.set("strength", f.strengths.join(","));
+  if (f.flavours.length) params.set("flavour", f.flavours.join(","));
+  if (f.formats.length) params.set("format", f.formats.join(","));
+  if (f.inStock) params.set("stock", "1");
+  if (f.search) params.set("q", f.search);
+  if (f.sort !== "featured") params.set("sort", f.sort);
+  return params.toString();
+}
+
+function facetCounts(products: Product[], pick: (p: Product) => string | undefined): Map<string, Facet> {
+  const map = new Map<string, Facet>();
+  for (const p of products) {
+    const label = pick(p);
+    if (!label) continue;
+    const value = facetSlug(label);
+    const facet = map.get(value) ?? { value, label, count: 0 };
+    facet.count++;
+    map.set(value, facet);
+  }
+  return map;
+}
+
+export function ProductsClient({ products: catalog, brands }: { products: Product[]; brands: Brand[] }) {
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category") as ProductCategory | null;
-  const queryParam = searchParams.get("q") ?? "";
-
-  const [filters, setFilters] = useState<FilterState>({
-    category: categoryParam ?? undefined,
-    search: queryParam || undefined,
-    sort: "featured",
-    inStock: false,
-  });
+  const [filters, setFilters] = useState<FilterState>(() => filtersFromParams(searchParams));
+  const [searchInput, setSearchInput] = useState(filters.search ?? "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState(queryParam);
-  const { toUsd, format, currency } = useCurrency();
 
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      category: categoryParam ?? undefined,
-      search: queryParam || undefined,
-    }));
-    setSearchInput(queryParam);
-  }, [categoryParam, queryParam]);
-
-  const filtered = useMemo(() => {
-    let products = [...catalog];
-
-    if (filters.category) {
-      products = products.filter((p) => p.category === filters.category);
-    }
-    if (filters.inStock) {
-      products = products.filter((p) => p.in_stock);
-    }
-    if (filters.search) {
-      const needle = filters.search.toLowerCase();
-      products = products.filter((p) =>
-        [p.name, p.sku, p.short_description, p.category].join(" ").toLowerCase().includes(needle)
-      );
-    }
-    if (filters.priceMin !== undefined) {
-      products = products.filter((p) => p.price >= toUsd(filters.priceMin!));
-    }
-    if (filters.priceMax !== undefined) {
-      products = products.filter((p) => p.price <= toUsd(filters.priceMax!));
-    }
-
-    switch (filters.sort) {
-      case "price-asc":
-        products.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        products.sort((a, b) => b.price - a.price);
-        break;
-      case "newest":
-        products.sort((a, b) => b.created_at.localeCompare(a.created_at));
-        break;
-      case "az":
-        products.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "za":
-        products.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-    }
-
-    return products;
-  }, [catalog, filters, toUsd]);
-
-  function clearFilter(key: keyof FilterState) {
-    setFilters((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
+  // Follow navigations from the header menu and search dialog (adjust state during render).
+  const paramsKey = searchParams.toString();
+  const [syncedKey, setSyncedKey] = useState(paramsKey);
+  if (paramsKey !== syncedKey) {
+    const next = filtersFromParams(searchParams);
+    setSyncedKey(paramsKey);
+    setFilters(next);
+    setSearchInput(next.search ?? "");
   }
 
-  const activeFilterCount = [
-    filters.category,
-    filters.inStock,
-    filters.priceMin,
-    filters.priceMax,
-    filters.search,
-  ].filter(Boolean).length;
+  // "Show more" resets whenever the filters change.
+  const filterKey = paramsFromFilters(filters);
+  const [page, setPage] = useState({ key: filterKey, count: PAGE_SIZE });
+  const visible = page.key === filterKey ? page.count : PAGE_SIZE;
+
+  // Keep the URL shareable without triggering a server round trip.
+  useEffect(() => {
+    const url = filterKey ? `/products?${filterKey}` : "/products";
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", url);
+    }
+  }, [filterKey]);
+
+  const facets = useMemo(() => {
+    const brandFacets = new Map<string, Facet>(
+      brands.map((b) => [b.slug, { value: b.slug, label: b.name, count: 0 }])
+    );
+    for (const p of catalog) {
+      if (!p.brand) continue;
+      const f = brandFacets.get(p.brand) ?? { value: p.brand, label: p.brand_name ?? p.brand, count: 0 };
+      f.count++;
+      brandFacets.set(p.brand, f);
+    }
+    const strengths = facetCounts(catalog, (p) => p.strength_level);
+    return {
+      brands: [...brandFacets.values()].filter((f) => f.count > 0),
+      strengths: STRENGTH_LEVELS.map((level) => strengths.get(facetSlug(level))).filter(Boolean) as Facet[],
+      flavours: [...facetCounts(catalog, (p) => p.flavour_family).values()].sort((a, b) => b.count - a.count),
+      formats: [...facetCounts(catalog, (p) => p.pouch_format).values()].sort((a, b) => b.count - a.count),
+    };
+  }, [catalog, brands]);
+
+  const filtered = useMemo(() => {
+    const has = (list: string[], label?: string) => list.length === 0 || (label ? list.includes(facetSlug(label)) : false);
+    let products = catalog.filter(
+      (p) =>
+        (filters.brands.length === 0 || (p.brand ? filters.brands.includes(p.brand) : false)) &&
+        has(filters.strengths, p.strength_level) &&
+        has(filters.flavours, p.flavour_family) &&
+        has(filters.formats, p.pouch_format) &&
+        (!filters.inStock || p.in_stock)
+    );
+
+    if (filters.search) {
+      const terms = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
+      products = products.filter((p) => {
+        const hay = [p.name, p.brand_name, p.flavour, p.flavour_family, p.strength_level, p.pouch_format, p.sku, `${p.strength_mg}mg`]
+          .join(" ")
+          .toLowerCase();
+        return terms.every((t) => hay.includes(t));
+      });
+    }
+
+    const sorted = [...products];
+    switch (filters.sort) {
+      case "price-asc":
+        sorted.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        sorted.sort((a, b) => b.price - a.price);
+        break;
+      case "strength-asc":
+        sorted.sort((a, b) => (a.strength_mg ?? 99) - (b.strength_mg ?? 99) || strengthRank(a.strength_level) - strengthRank(b.strength_level));
+        break;
+      case "strength-desc":
+        sorted.sort((a, b) => (b.strength_mg ?? 0) - (a.strength_mg ?? 0));
+        break;
+      case "newest":
+        sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
+        break;
+      case "az":
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        // Server order: in stock, then featured, then name.
+        break;
+    }
+    return sorted;
+  }, [catalog, filters]);
+
+  const labelFor = (list: Facet[], value: string) => list.find((f) => f.value === value)?.label ?? value;
+  const remove = (key: "brands" | "strengths" | "flavours" | "formats", value: string) =>
+    setFilters((p) => ({ ...p, [key]: p[key].filter((v) => v !== value) }));
+
+  const chips = [
+    ...filters.brands.map((v) => ({ key: `b-${v}`, label: labelFor(facets.brands, v), onRemove: () => remove("brands", v) })),
+    ...filters.strengths.map((v) => ({ key: `s-${v}`, label: labelFor(facets.strengths, v), onRemove: () => remove("strengths", v) })),
+    ...filters.flavours.map((v) => ({ key: `f-${v}`, label: labelFor(facets.flavours, v), onRemove: () => remove("flavours", v) })),
+    ...filters.formats.map((v) => ({ key: `p-${v}`, label: labelFor(facets.formats, v), onRemove: () => remove("formats", v) })),
+    ...(filters.inStock ? [{ key: "stock", label: "In stock", onRemove: () => setFilters((p) => ({ ...p, inStock: false })) }] : []),
+    ...(filters.search
+      ? [{ key: "q", label: `“${filters.search}”`, onRemove: () => { setSearchInput(""); setFilters((p) => ({ ...p, search: undefined })); } }]
+      : []),
+  ];
+
+  const singleBrand = filters.brands.length === 1 ? labelFor(facets.brands, filters.brands[0]) : null;
+  const heading = singleBrand ? `${singleBrand} Nicotine Pouches` : "Nicotine Pouches";
+
+  function clearAll() {
+    setSearchInput("");
+    setFilters({ brands: [], strengths: [], flavours: [], formats: [], inStock: false, sort: filters.sort });
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Page header */}
       <div className="border-b border-slate-200 bg-slate-50">
-        <div className="container-wide py-14 lg:py-16">
-          <p className="eyebrow">Catalogue</p>
-          <h1 className="display-lg text-slate-900">Commercial Inflatables</h1>
+        <div className="container-wide py-12 lg:py-14">
+          <p className="eyebrow">Shop</p>
+          <h1 className="display-lg text-slate-900">{heading}</h1>
           <p className="spec mt-5 text-[0.8125rem] uppercase tracking-[0.14em] text-slate-500">
-            {filtered.length} products
-            {filters.category
-              ? ` · ${filters.category.replace(/-/g, " ")}`
-              : ""}
+            {filtered.length} of {catalog.length} products
           </p>
 
-          {/* Active filter chips */}
-          {activeFilterCount > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-            {filters.search && (
-              <FilterChip
-                label={`Search: ${filters.search}`}
-                onRemove={() => {
-                  setSearchInput("");
-                  clearFilter("search");
-                }}
-              />
-            )}
-              {filters.category && (
-                <FilterChip
-                  label={`Category: ${filters.category.replace(/-/g, " ")}`}
-                  onRemove={() => clearFilter("category")}
-                />
-              )}
-              {filters.inStock && (
-                <FilterChip label="In Stock" onRemove={() => clearFilter("inStock")} />
-              )}
-              {filters.priceMin && (
-                <FilterChip
-                  label={`Min: ${format(toUsd(filters.priceMin))}`}
-                  onRemove={() => clearFilter("priceMin")}
-                />
-              )}
-              {filters.priceMax && (
-                <FilterChip
-                  label={`Max: ${format(toUsd(filters.priceMax))}`}
-                  onRemove={() => clearFilter("priceMax")}
-                />
-              )}
+          {chips.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {chips.map((chip) => (
+                <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
+              ))}
+              <button onClick={clearAll} className="text-xs font-semibold text-slate-500 underline-offset-4 hover:text-slate-900 hover:underline">
+                Clear all
+              </button>
             </div>
           )}
         </div>
@@ -160,57 +209,51 @@ export function ProductsClient({
 
       <div className="container-wide py-8">
         <div className="flex gap-8">
-          {/* Sidebar, desktop */}
-          <aside className="hidden lg:block w-56 flex-shrink-0">
-            <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+          <aside className="hidden w-60 flex-shrink-0 lg:block">
+            <FilterSidebar filters={filters} setFilters={setFilters} facets={facets} />
           </aside>
 
-          {/* Products */}
-          <div className="flex-1 min-w-0">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden flex items-center gap-2 btn-secondary text-sm py-2 px-4"
+                className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm lg:hidden"
               >
-                <SlidersHorizontal className="w-4 h-4" />
+                <SlidersHorizontal className="h-4 w-4" />
                 Filters
-                {activeFilterCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-orange-600 text-white text-xs flex items-center justify-center font-semibold">
-                    {activeFilterCount}
+                {chips.length > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-xs font-semibold text-white">
+                    {chips.length}
                   </span>
                 )}
               </button>
 
               <form
-                className="flex items-center gap-2 flex-1 min-w-[180px] max-w-sm"
+                className="flex min-w-[180px] max-w-sm flex-1 items-center gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();
                   setFilters((p) => ({ ...p, search: searchInput.trim() || undefined }));
                 }}
               >
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search products"
-                    className="input text-sm py-2 pl-9"
+                    placeholder="Search flavour, brand, mg…"
+                    className="input py-2 pl-9 text-sm"
+                    aria-label="Search products"
                   />
                 </div>
               </form>
 
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-slate-500 hidden sm:block">Sort by</span>
+              <div className="ml-auto flex items-center gap-2">
+                <span className="hidden text-xs text-slate-500 sm:block">Sort by</span>
                 <select
-                  value={filters.sort ?? "featured"}
-                  onChange={(e) =>
-                    setFilters((p) => ({
-                      ...p,
-                      sort: e.target.value as FilterState["sort"],
-                    }))
-                  }
-                  className="text-sm border border-slate-200 rounded-md px-3 py-1.5 text-slate-700 focus:outline-none focus:border-orange-400 bg-white"
+                  value={filters.sort}
+                  onChange={(e) => setFilters((p) => ({ ...p, sort: e.target.value as SortOption }))}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-orange-400 focus:outline-none"
+                  aria-label="Sort products"
                 >
                   {SORT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -223,44 +266,48 @@ export function ProductsClient({
 
             {filtered.length === 0 ? (
               <div className="py-20 text-center">
-                <p className="text-slate-500 text-sm">No products match your filters.</p>
-                <button
-                  onClick={() => {
-                    setSearchInput("");
-                    setFilters({ sort: "featured" });
-                  }}
-                  className="mt-4 btn-secondary text-sm py-2 px-4"
-                >
-                  Clear all filters
+                <p className="text-sm text-slate-500">No pouches match these filters.</p>
+                <button onClick={clearAll} className="btn-secondary mt-4 px-4 py-2 text-sm">
+                  Clear filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-                {filtered.map((product, i) => (
-                  <ProductCard key={product.id} product={product} priority={i < 6} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+                  {filtered.slice(0, visible).map((product, i) => (
+                    <ProductCard key={product.id} product={product} priority={i < 8} />
+                  ))}
+                </div>
+                {visible < filtered.length && (
+                  <div className="mt-10 text-center">
+                    <button className="btn-secondary px-6 py-3" onClick={() => setPage({ key: filterKey, count: visible + PAGE_SIZE })}>
+                      Show more ({filtered.length - visible} left)
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile filter drawer */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-white overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute bottom-0 right-0 top-0 flex w-80 max-w-[85vw] flex-col bg-white">
+            <div className="flex items-center justify-between border-b border-slate-200 p-4">
               <h2 className="font-semibold text-slate-900">Filters</h2>
-              <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-100 rounded-md">
-                <X className="w-4 h-4" />
+              <button onClick={() => setSidebarOpen(false)} className="rounded-md p-1 hover:bg-slate-100" aria-label="Close filters">
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-4">
-              <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+            <div className="flex-1 overflow-y-auto p-4">
+              <FilterSidebar filters={filters} setFilters={setFilters} facets={facets} />
+            </div>
+            <div className="border-t border-slate-200 p-4">
+              <button className="btn-primary w-full" onClick={() => setSidebarOpen(false)}>
+                Show {filtered.length} products
+              </button>
             </div>
           </div>
         </div>
@@ -269,133 +316,150 @@ export function ProductsClient({
   );
 }
 
+type Facets = { brands: Facet[]; strengths: Facet[]; flavours: Facet[]; formats: Facet[] };
+
 function FilterSidebar({
   filters,
   setFilters,
-  categories,
+  facets,
 }: {
   filters: FilterState;
   setFilters: Dispatch<SetStateAction<FilterState>>;
-  categories: Category[];
+  facets: Facets;
 }) {
-  const { currency } = useCurrency();
+  const toggle = (key: "brands" | "strengths" | "flavours" | "formats", value: string) =>
+    setFilters((p) => ({
+      ...p,
+      [key]: p[key].includes(value) ? p[key].filter((v) => v !== value) : [...p[key], value],
+    }));
+
   return (
-    <div className="space-y-6">
-      {/* Categories */}
-      <div>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          Category
-        </h3>
-        <ul className="space-y-1">
-          <li>
-            <button
-              onClick={() => setFilters((p) => ({ ...p, category: undefined }))}
-              className={cn(
-                "w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors",
-                !filters.category
-                  ? "bg-orange-50 text-orange-700 font-semibold"
-                  : "text-slate-700 hover:bg-slate-50"
-              )}
-            >
-              All Products
-            </button>
-          </li>
-          {categories.map((cat) => (
-            <li key={cat.id}>
-              <button
-                onClick={() =>
-                  setFilters((p) => ({ ...p, category: cat.slug }))
-                }
-                className={cn(
-                  "w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors flex items-center justify-between",
-                  filters.category === cat.slug
-                    ? "bg-orange-50 text-orange-700 font-semibold"
-                    : "text-slate-700 hover:bg-slate-50"
-                )}
-              >
-                <span>{cat.name}</span>
-                <span className="text-xs text-slate-400">{cat.product_count}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="space-y-7">
+      <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+        <input
+          type="checkbox"
+          checked={filters.inStock}
+          onChange={(e) => setFilters((p) => ({ ...p, inStock: e.target.checked }))}
+          className="h-4 w-4 rounded border-slate-300 accent-orange-600"
+        />
+        In stock only
+      </label>
 
-      {/* Price range */}
-      <div>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          Price Range ({currency})
-        </h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Min</label>
-            <input
-              type="number"
-              placeholder="$0"
-              className="input text-sm py-1.5"
-              value={filters.priceMin ?? ""}
-              onChange={(e) =>
-                setFilters((p) => ({
-                  ...p,
-                  priceMin: e.target.value ? Number(e.target.value) : undefined,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Max</label>
-            <input
-              type="number"
-              placeholder="Any"
-              className="input text-sm py-1.5"
-              value={filters.priceMax ?? ""}
-              onChange={(e) =>
-                setFilters((p) => ({
-                  ...p,
-                  priceMax: e.target.value ? Number(e.target.value) : undefined,
-                }))
-              }
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Availability */}
-      <div>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          Availability
-        </h3>
-        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={filters.inStock ?? false}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, inStock: e.target.checked }))
-            }
-            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+      <FacetGroup title="Strength">
+        {facets.strengths.map((f) => (
+          <FacetOption
+            key={f.value}
+            label={f.label}
+            count={f.count}
+            checked={filters.strengths.includes(f.value)}
+            onChange={() => toggle("strengths", f.value)}
+            extra={<StrengthDots level={f.label} />}
           />
-          In stock only
-        </label>
-      </div>
+        ))}
+      </FacetGroup>
+
+      <FacetGroup title="Brand" collapsible={facets.brands.length > 10}>
+        {facets.brands.map((f) => (
+          <FacetOption
+            key={f.value}
+            label={f.label}
+            count={f.count}
+            checked={filters.brands.includes(f.value)}
+            onChange={() => toggle("brands", f.value)}
+          />
+        ))}
+      </FacetGroup>
+
+      <FacetGroup title="Flavour">
+        {facets.flavours.map((f) => (
+          <FacetOption
+            key={f.value}
+            label={f.label}
+            count={f.count}
+            checked={filters.flavours.includes(f.value)}
+            onChange={() => toggle("flavours", f.value)}
+          />
+        ))}
+      </FacetGroup>
+
+      <FacetGroup title="Pouch format">
+        {facets.formats.map((f) => (
+          <FacetOption
+            key={f.value}
+            label={f.label}
+            count={f.count}
+            checked={filters.formats.includes(f.value)}
+            onChange={() => toggle("formats", f.value)}
+          />
+        ))}
+      </FacetGroup>
     </div>
   );
 }
 
-function FilterChip({
+function FacetGroup({
+  title,
+  collapsible = false,
+  children,
+}: {
+  title: string;
+  collapsible?: boolean;
+  children: React.ReactNode[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const items = collapsible && !expanded ? children.slice(0, 10) : children;
+  return (
+    <div>
+      <h3 className="spec mb-3 text-[0.625rem] uppercase tracking-[0.16em] text-slate-500">{title}</h3>
+      <ul className="space-y-0.5">{items}</ul>
+      {collapsible && (
+        <button
+          className="mt-2 px-2 text-xs font-semibold text-orange-700 hover:text-orange-600"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Show fewer" : `Show all ${children.length}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function FacetOption({
   label,
-  onRemove,
+  count,
+  checked,
+  onChange,
+  extra,
 }: {
   label: string;
-  onRemove: () => void;
+  count: number;
+  checked: boolean;
+  onChange: () => void;
+  extra?: React.ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-      {label}
-      <button
-        onClick={onRemove}
-        className="text-slate-400 hover:text-slate-700 transition-colors"
+    <li>
+      <label
+        className={cn(
+          "flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+          checked ? "bg-orange-50 font-semibold text-orange-800" : "text-slate-700 hover:bg-slate-50"
+        )}
       >
-        <X className="w-3 h-3" />
+        <input type="checkbox" checked={checked} onChange={onChange} className="h-3.5 w-3.5 accent-orange-600" />
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {extra}
+        <span className="spec text-[0.6875rem] text-slate-400">{count}</span>
+      </label>
+    </li>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+      {label}
+      <button onClick={onRemove} className="text-slate-400 transition-colors hover:text-slate-700" aria-label={`Remove ${label}`}>
+        <X className="h-3 w-3" />
       </button>
     </span>
   );

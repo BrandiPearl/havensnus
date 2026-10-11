@@ -6,28 +6,28 @@
 
 const REASONS = [
   {
-    title: "Commercial grade build",
-    body: "18oz PVC vinyl, quadruple stitched seams and reinforced anchor points. The same specification the largest rental fleets in the US run.",
+    title: "30+ brands, one cart",
+    body: "ZYN, VELO, PABLO, KILLA, XQS, CUBA and the rest, side by side. Compare strengths and flavours without hopping between shops.",
   },
   {
-    title: "ASTM & CPSC compliant",
-    body: "Every unit meets or exceeds ASTM F2374 and CPSC standards. Certification documents ship with the order, ready for your insurer.",
+    title: "Fresh stock",
+    body: "We turn stock over quickly, so cans arrive moist and full-flavoured rather than dried out at the back of a shelf.",
   },
   {
-    title: "Freight to 48 states",
-    body: "LTL freight anywhere in the contiguous US. Most orders leave the Ontario, CA warehouse within three to five business days.",
+    title: "Tracked AU & NZ delivery",
+    body: "Every order ships with tracking to Australia and New Zealand, and shipping is free once your order passes the threshold.",
   },
   {
-    title: "Kitted, not bare",
-    body: "Blowers, stakes, storage bag and a commercial repair kit are in the crate. Nothing else to source before your first booking.",
+    title: "Honest strength grading",
+    body: "Each can shows its mg per pouch and a six-dot strength level, so stepping up or down is never a guess.",
   },
   {
-    title: "Operators on the phone",
-    body: "Our team has fifteen years in the rental trade. We will tell you which units suit your market, including when to buy less.",
+    title: "Discreet packaging",
+    body: "Plain outer packaging with no branding on the box. What you order is your business.",
   },
   {
-    title: "Single-season payback",
-    body: "Popular units rent at $300 to $800 per day. Most operators clear their investment inside one summer.",
+    title: "Real people on support",
+    body: "Questions about strengths, flavours or an order? Message us and a person, not a bot, will get back to you.",
   },
 ];
 
@@ -38,13 +38,13 @@ export function WhyUs() {
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-28">
-              <p className="eyebrow">Why Wonderland</p>
+              <p className="eyebrow">Why Haven</p>
               <h2 className="section-heading">
-                The choice of serious rental operators
+                Stocked for people who know their pouch
               </h2>
               <p className="section-subheading">
-                From one starter unit to a fleet of fifty, we have helped
-                operators at every stage build something that pays for itself.
+                Whether you have used the same can for years or are still
+                finding your flavour, we make reordering simple.
               </p>
             </div>
           </div>

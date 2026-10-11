@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL, absoluteUrl } from "@/lib/site";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Clock, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.seo?.title ?? post.title,
     description: post.seo?.description ?? post.excerpt,
     alternates: {
-      canonical: `https://wonderlandinflatables.com/blog/${post.slug}`,
+      canonical: `/blog/${post.slug}`,
     },
     openGraph: {
       title: post.title,
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString("en-AU", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -145,23 +146,22 @@ export default async function BlogPostPage({ params }: Props) {
           )}
 
           <div className="mt-10 rounded-2xl bg-orange-600 p-8 text-white">
-            <h3 className="text-xl font-bold">Ready to get started?</h3>
+            <h3 className="text-xl font-bold">Find your next can</h3>
             <p className="mt-2 text-orange-100 text-sm leading-relaxed">
-              Browse our full catalog of commercial grade inflatables, built for rental
-              operators who take their business seriously.
+              30+ brands in every strength and flavour, delivered across Australia and New Zealand.
             </p>
             <div className="mt-5 flex gap-3">
               <Link
                 href="/products"
                 className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 transition-colors"
               >
-                Browse Products <ArrowRight className="w-4 h-4" />
+                Shop pouches <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/quote"
+                href="/brands"
                 className="inline-flex items-center gap-2 rounded-md border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
               >
-                Get a Quote
+                Browse brands
               </Link>
             </div>
           </div>
@@ -223,10 +223,10 @@ export default async function BlogPostPage({ params }: Props) {
             },
             publisher: {
               "@type": "Organization",
-              name: "Wonderland Inflatables",
-              url: "https://wonderlandinflatables.com",
+              name: "Haven Snus",
+              url: SITE_URL,
             },
-            url: `https://wonderlandinflatables.com/blog/${post.slug}`,
+            url: absoluteUrl(`/blog/${post.slug}`),
             keywords: post.tags.join(", "),
           }),
         }}

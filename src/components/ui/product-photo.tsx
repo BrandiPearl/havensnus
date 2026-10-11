@@ -1,77 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ProductImagePlaceholder } from "./product-image-placeholder";
 
 interface ProductPhotoProps {
   src?: string;
   alt: string;
   name: string;
-  category: string;
   priority?: boolean;
-  sizes: string;
   className?: string;
 }
 
 /**
- * Supplier catalogue photography ships with a ~1%-per-edge orange keyline
- * burned into the JPEG. Remote images are therefore overscaled a hair inside
- * a clipping frame so that border falls outside the crop. The scale lives on
- * the wrapper, leaving the caller's own transform (hover zoom) free to
- * compose on the image itself.
+ * Can shots are square packshots on white or transparent backgrounds, so
+ * they are contained (never cropped) on a white tile with breathing room.
  */
-const REMOTE_TRIM = "scale(1.035)";
+export function ProductPhoto({ src, alt, name, priority = false, className }: ProductPhotoProps) {
+  // Remember which URL failed, so a new src gets a fresh attempt.
+  const [failedSrc, setFailedSrc] = useState<string>();
 
-export function ProductPhoto({
-  src,
-  alt,
-  name,
-  category,
-  priority = false,
-  sizes,
-  className = "object-cover",
-}: ProductPhotoProps) {
-  const [failed, setFailed] = useState(false);
-  const remote = Boolean(src?.startsWith("http"));
-
-  useEffect(() => {
-    setFailed(false);
-  }, [src]);
-
-  if (!src || failed) {
-    return <ProductImagePlaceholder name={name} category={category} />;
+  if (!src || failedSrc === src) {
+    return <PhotoPlaceholder name={name} />;
   }
 
   return (
+    <div className="absolute inset-0 bg-white">
+      {/* R2 serves sized webp already; a plain img avoids a second optimisation hop. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : undefined}
+        className={cn("absolute inset-0 h-full w-full object-contain p-[9%]", className)}
+        onError={() => setFailedSrc(src)}
+      />
+    </div>
+  );
+}
+
+function PhotoPlaceholder({ name }: { name: string }) {
+  const initials = name
+    .split(/[\s–-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  return (
     <div
-      className="absolute inset-0 overflow-hidden"
-      style={remote ? { transform: REMOTE_TRIM } : undefined}
+      className="absolute inset-0 flex items-center justify-center bg-slate-100"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(135deg, rgba(19,26,32,0.045) 0 1px, transparent 1px 9px)",
+      }}
     >
-      {remote ? (
-        // Remote catalog photos: native img fills the frame reliably.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={alt}
-          className={cn(
-            "absolute inset-0 h-full w-full object-cover object-center",
-            className
-          )}
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          priority={priority}
-          sizes={sizes}
-          className={cn("object-cover object-center", className)}
-          onError={() => setFailed(true)}
-        />
-      )}
+      <span className="font-display display-wide text-4xl font-extrabold tracking-tight text-slate-300">
+        {initials}
+      </span>
     </div>
   );
 }

@@ -1,55 +1,53 @@
 import type { MetadataRoute } from "next";
-import { getCategories, getProductSlugs } from "@/lib/queries/products";
+import { getBrands, getProductSlugs } from "@/lib/queries/products";
 import { getBlogSlugs } from "@/lib/queries/blog";
-
-const BASE_URL = "https://wonderlandinflatables.com";
+import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+  const page = (path: string, changeFrequency: "daily" | "weekly" | "monthly" | "yearly", priority: number) => ({
+    url: `${SITE_URL}${path}`,
+    lastModified: now,
+    changeFrequency,
+    priority,
+  });
+
   const staticPages = [
-    { url: BASE_URL, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 1 },
-    { url: `${BASE_URL}/products`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.9 },
-    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.7 },
-    { url: `${BASE_URL}/about`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
-    { url: `${BASE_URL}/contact`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
-    { url: `${BASE_URL}/quote`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.8 },
-    { url: `${BASE_URL}/rentals`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.8 },
-    { url: `${BASE_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.6 },
-    { url: `${BASE_URL}/shipping`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
-    { url: `${BASE_URL}/returns`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
-    { url: `${BASE_URL}/guides`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
-    { url: `${BASE_URL}/safety`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
-    { url: `${BASE_URL}/careers`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.3 },
-    { url: `${BASE_URL}/press`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.3 },
-    { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
-    { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
+    page("", "daily", 1),
+    page("/products", "daily", 0.9),
+    page("/brands", "weekly", 0.8),
+    page("/faq", "monthly", 0.6),
+    page("/blog", "weekly", 0.6),
+    page("/about", "monthly", 0.5),
+    page("/contact", "monthly", 0.5),
+    page("/shipping", "monthly", 0.4),
+    page("/returns", "monthly", 0.3),
+    page("/privacy", "yearly", 0.2),
+    page("/terms", "yearly", 0.2),
   ];
 
-  const [categories, catalog, blog] = await Promise.all([
-    getCategories(),
-    getProductSlugs(),
-    getBlogSlugs(),
-  ]);
+  const [brands, catalog, blog] = await Promise.all([getBrands(), getProductSlugs(), getBlogSlugs()]);
 
-  const categoryPages = categories.map((cat) => ({
-    url: `${BASE_URL}/products?category=${cat.slug}`,
-    lastModified: new Date(),
+  const brandPages = brands.map((brand) => ({
+    url: `${SITE_URL}/products?brand=${brand.slug}`,
+    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
 
-  const productPages = catalog.map((p) => ({
-    url: `${BASE_URL}/product/${p.slug}`,
-    lastModified: new Date(p.updated_at),
+  const productPages = catalog.map((product) => ({
+    url: `${SITE_URL}/product/${product.slug}`,
+    lastModified: new Date(product.updated_at),
     changeFrequency: "weekly" as const,
-    priority: 0.8,
+    priority: 0.7,
   }));
 
-  const blogPages = blog.map((p) => ({
-    url: `${BASE_URL}/blog/${p.slug}`,
-    lastModified: new Date(p.updated_at),
+  const blogPages = blog.map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: new Date(post.updated_at),
     changeFrequency: "monthly" as const,
-    priority: 0.6,
+    priority: 0.5,
   }));
 
-  return [...staticPages, ...categoryPages, ...productPages, ...blogPages];
+  return [...staticPages, ...brandPages, ...productPages, ...blogPages];
 }

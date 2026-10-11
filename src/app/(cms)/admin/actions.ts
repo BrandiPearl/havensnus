@@ -8,17 +8,11 @@ import {
   setCmsSessionCookie,
 } from "@/lib/cms/auth";
 import { expectedSessionToken } from "@/lib/cms/session";
-import {
-  BLOG_STATUSES,
-  CONTACT_STATUSES,
-  PRODUCT_CATEGORIES,
-  QUOTE_STATUSES,
-} from "@/lib/cms/constants";
+import { BLOG_STATUSES, CONTACT_STATUSES, ORDER_STATUSES } from "@/lib/cms/constants";
 import { bool, emptyToNull, lines, num, slugFrom, str, type ActionState } from "@/lib/cms/form";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ProductCategory } from "@/types";
 import { sendMail } from "@/lib/email/mailer";
-import { statusCustomerEmail } from "@/lib/email/templates";
+import { contactStatusEmail, orderStatusEmail } from "@/lib/email/templates";
 
 function adminOrThrow() {
   const admin = createAdminClient();
@@ -40,23 +34,15 @@ function revalidateStorefront(productSlug?: string, blogSlug?: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/products");
   revalidatePath("/admin/blog");
-  revalidatePath("/admin/quotes");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/testimonials");
   revalidatePath("/");
   revalidatePath("/products");
-  revalidatePath("/rentals");
+  revalidatePath("/brands");
   revalidatePath("/blog");
   revalidatePath("/contact");
   if (productSlug) revalidatePath(`/product/${productSlug}`);
   if (blogSlug) revalidatePath(`/blog/${blogSlug}`);
-}
-
-const CATEGORY_VALUES = new Set(PRODUCT_CATEGORIES.map((item) => item.value));
-
-function categoryFrom(form: FormData): ProductCategory {
-  const value = str(form, "category");
-  return CATEGORY_VALUES.has(value as ProductCategory) ? (value as ProductCategory) : "other";
 }
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -106,30 +92,24 @@ export async function saveProduct(_prev: ActionState, formData: FormData): Promi
     short_description: str(formData, "short_description"),
     price,
     compare_at_price: compareAt,
-    category: categoryFrom(formData),
-    subcategory: emptyToNull(str(formData, "subcategory")),
+    brand: emptyToNull(str(formData, "brand")),
+    product_line: emptyToNull(str(formData, "product_line")),
     tags: lines(formData, "tags").flatMap((line) =>
       line.split(",").map((tag) => tag.trim()).filter(Boolean)
     ),
-    spec_length: emptyToNull(str(formData, "spec_length")),
-    spec_width: emptyToNull(str(formData, "spec_width")),
-    spec_height: emptyToNull(str(formData, "spec_height")),
-    spec_weight: emptyToNull(str(formData, "spec_weight")),
-    spec_capacity: emptyToNull(str(formData, "spec_capacity")),
-    spec_blower: emptyToNull(str(formData, "spec_blower")),
-    spec_material: emptyToNull(str(formData, "spec_material")),
-    spec_setup_time: emptyToNull(str(formData, "spec_setup_time")),
-    spec_age_range: emptyToNull(str(formData, "spec_age_range")),
-    spec_outlet: emptyToNull(str(formData, "spec_outlet")),
+    strength_mg: num(formData, "strength_mg"),
+    strength_level: emptyToNull(str(formData, "strength_level")),
+    flavour: emptyToNull(str(formData, "flavour")),
+    flavour_family: emptyToNull(str(formData, "flavour_family")),
+    pouch_format: emptyToNull(str(formData, "pouch_format")),
+    pouches_per_tin: num(formData, "pouches_per_tin"),
+    stock_quantity: num(formData, "stock_quantity"),
     is_featured: bool(formData, "is_featured"),
     is_new: bool(formData, "is_new"),
     in_stock: bool(formData, "in_stock"),
     is_active: bool(formData, "is_active"),
-    rental_available: bool(formData, "rental_available"),
-    purchase_available: bool(formData, "purchase_available"),
     seo_title: emptyToNull(str(formData, "seo_title")),
     seo_description: emptyToNull(str(formData, "seo_description")),
-    source_site: "manual",
   };
 
   let productId = id;
@@ -138,7 +118,11 @@ export async function saveProduct(_prev: ActionState, formData: FormData): Promi
     const { error } = await admin.from("products").update(payload).eq("id", id);
     if (error) return fail(error.message);
   } else {
-    const { data, error } = await admin.from("products").insert(payload).select("id").single();
+    const { data, error } = await admin
+      .from("products")
+      .insert({ ...payload, source_site: "manual" })
+      .select("id")
+      .single();
     if (error || !data) return fail(error?.message ?? "Could not create product.");
     productId = String(data.id);
   }
@@ -251,29 +235,49 @@ export async function deleteBlogPost(formData: FormData) {
   redirect("/admin/blog");
 }
 
-export async function updateQuoteStatus(formData: FormData) {
+export async function updateOrder(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireCmsSession();
   const admin = adminOrThrow();
   const id = str(formData, "id");
   const status = str(formData, "status");
-  if (!id || !QUOTE_STATUSES.includes(status as (typeof QUOTE_STATUSES)[number])) return;
+  if (!id) return fail("Missing order.");
+  if (!ORDER_STATUSES.includes(status as (typeof ORDER_STATUSES)[number])) return fail("Pick a valid status.");
+
+  const tracking = str(formData, "tracking_number");
+  if (status === "shipped" && !tracking) return fail("Add a tracking number before marking the order shipped.");
+
   const { data: existing } = await admin
-    .from("quote_requests")
-    .select("first_name, email, event_type")
+    .from("orders")
+    .select("first_name, email, reference, status")
     .eq("id", id)
     .maybeSingle();
-  const { error } = await admin.from("quote_requests").update({ status }).eq("id", id);
-  if (error) throw new Error(error.message);
-  if (existing?.email && status !== "pending") {
-    const mail = statusCustomerEmail({
-      name: String(existing.first_name || "there"),
-      kind: existing.event_type === "Purchase" ? "order" : "quote",
+  if (!existing) return fail("Order not found.");
+
+  const { error } = await admin
+    .from("orders")
+    .update({
       status,
+      tracking_number: emptyToNull(tracking),
+      internal_notes: emptyToNull(str(formData, "internal_notes")),
+    })
+    .eq("id", id);
+  if (error) return fail(error.message);
+
+  let note = "Order saved.";
+  if (existing.status !== status && status !== "pending" && bool(formData, "notify")) {
+    const mail = orderStatusEmail({
+      name: String(existing.first_name || "there"),
+      reference: String(existing.reference),
+      status,
+      trackingNumber: tracking || undefined,
     });
-    await sendMail({ to: String(existing.email), ...mail });
+    const result = await sendMail({ to: String(existing.email), ...mail });
+    note = result.sent ? "Order saved and customer emailed." : "Order saved, but the email could not be sent.";
   }
-  revalidatePath("/admin/quotes");
+
+  revalidatePath("/admin/orders");
   revalidatePath("/admin");
+  return ok(note);
 }
 
 export async function updateContactStatus(formData: FormData) {
@@ -290,14 +294,10 @@ export async function updateContactStatus(formData: FormData) {
   const { error } = await admin.from("contact_messages").update({ status }).eq("id", id);
   if (error) throw new Error(error.message);
   if (existing?.email && (status === "replied" || status === "closed")) {
-    const mail = statusCustomerEmail({
-      name: String(existing.name || "there"),
-      kind: "message",
-      status,
-    });
+    const mail = contactStatusEmail({ name: String(existing.name || "there"), status });
     await sendMail({ to: String(existing.email), ...mail });
   }
-  revalidatePath("/admin/quotes");
+  revalidatePath("/admin/messages");
   revalidatePath("/admin");
 }
 
@@ -317,14 +317,23 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
     ["announcement_link_url", str(formData, "announcement_link_url")],
   ];
 
+  const rates: [string, number | null][] = [
+    ["shipping_au", num(formData, "shipping_au")],
+    ["shipping_nz", num(formData, "shipping_nz")],
+    ["free_shipping_threshold", num(formData, "free_shipping_threshold")],
+  ];
+  for (const [key, value] of rates) {
+    if (value == null || value < 0) return fail("Shipping amounts must be 0 or more.");
+    const { error } = await admin.from("site_settings").upsert({ key, value }, { onConflict: "key" });
+    if (error) return fail(error.message);
+  }
+
   for (const [key, value] of entries) {
     const { error } = await admin.from("site_settings").upsert({ key, value }, { onConflict: "key" });
     if (error) return fail(error.message);
   }
 
-  revalidatePath("/admin/settings");
-  revalidatePath("/");
-  revalidatePath("/contact");
+  revalidatePath("/", "layout");
   return ok("Settings saved.");
 }
 
@@ -343,7 +352,7 @@ export async function saveTestimonial(_prev: ActionState, formData: FormData): P
     location: emptyToNull(str(formData, "location")),
     rating: Math.min(5, Math.max(1, num(formData, "rating") ?? 5)),
     review,
-    event_type: emptyToNull(str(formData, "event_type")),
+    product: emptyToNull(str(formData, "product")),
     avatar_url: emptyToNull(str(formData, "avatar_url")),
     is_featured: bool(formData, "is_featured"),
     is_active: bool(formData, "is_active"),
