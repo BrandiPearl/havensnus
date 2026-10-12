@@ -383,3 +383,10 @@ export async function deleteTestimonial(formData: FormData) {
   revalidatePath("/");
   redirect("/admin/testimonials");
 }
+
+/** Clears every cached storefront page and data entry, e.g. after running the importer. */
+export async function refreshSiteCache(_prev: ActionState): Promise<ActionState> {
+  await requireCmsSession();
+  revalidatePath("/", "layout");
+  return ok("Site cache cleared. Pages rebuild with fresh data on their next visit.");
+}

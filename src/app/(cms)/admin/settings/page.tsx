@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AdminPageHeader } from "@/components/cms/admin-page-header";
 import { getSiteSettings } from "@/lib/queries/settings";
 import { SettingsForm } from "@/components/cms/settings-form";
+import { RefreshCache } from "@/components/cms/refresh-cache";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -12,9 +13,12 @@ export default async function AdminSettingsPage() {
     <div>
       <AdminPageHeader
         title="Settings"
-        description="Business details, SEO defaults, and the announcement bar."
+        description="Business details, shipping, SEO defaults, the announcement bar and the site cache."
       />
       <SettingsForm settings={settings} />
+      <div className="mt-8">
+        <RefreshCache />
+      </div>
     </div>
   );
 }
