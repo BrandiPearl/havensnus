@@ -46,23 +46,65 @@ function formatDate(dateStr: string) {
   });
 }
 
-function ArticleBody({ content }: { content: string }) {
-  const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
+/** **bold** inline markup. */
+function Inline({ text }: { text: string }) {
   return (
-    <article className="prose prose-slate prose-base max-w-none">
-      {paragraphs.map((paragraph, i) => {
-        const parts = paragraph.split(/(\*\*[^*]+\*\*)/g);
+    <>
+      {text.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+        part.startsWith("**") && part.endsWith("**") ? (
+          <strong key={j} className="font-bold text-slate-900">
+            {part.slice(2, -2)}
+          </strong>
+        ) : (
+          <span key={j}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
+/**
+ * Blocks separated by blank lines: "## " heading, "- " bullet list,
+ * "1. " numbered list, otherwise a paragraph.
+ */
+function ArticleBody({ content }: { content: string }) {
+  const blocks = content.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  return (
+    <article className="max-w-none">
+      {blocks.map((block, i) => {
+        const lines = block.split("\n").map((l) => l.trim());
+        if (block.startsWith("## ")) {
+          return (
+            <h2 key={i} className="mb-4 mt-10 font-display text-xl font-bold tracking-tight text-slate-900">
+              {block.slice(3)}
+            </h2>
+          );
+        }
+        if (lines.every((l) => l.startsWith("- "))) {
+          return (
+            <ul key={i} className="mb-6 list-disc space-y-2 pl-5 leading-7 text-slate-700 marker:text-orange-600">
+              {lines.map((l, j) => (
+                <li key={j}>
+                  <Inline text={l.slice(2)} />
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (lines.every((l) => /^\d+\.\s/.test(l))) {
+          return (
+            <ol key={i} className="mb-6 list-decimal space-y-2 pl-5 leading-7 text-slate-700">
+              {lines.map((l, j) => (
+                <li key={j}>
+                  <Inline text={l.replace(/^\d+\.\s/, "")} />
+                </li>
+              ))}
+            </ol>
+          );
+        }
         return (
-          <p key={i} className="mb-5 text-slate-700 leading-7">
-            {parts.map((part, j) =>
-              part.startsWith("**") ? (
-                <strong key={j} className="font-bold text-slate-900">
-                  {part.slice(2, -2)}
-                </strong>
-              ) : (
-                <span key={j}>{part}</span>
-              )
-            )}
+          <p key={i} className="mb-5 leading-7 text-slate-700">
+            <Inline text={block} />
           </p>
         );
       })}

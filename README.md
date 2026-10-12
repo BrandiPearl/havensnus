@@ -20,6 +20,12 @@ products in place, matched on `(source_site, source_id)`.
 - `npm run import:dry` fetches and prints a summary only
 - `npm run import:cache` re-imports the last fetch
 
+## Blog
+
+`npm run seed:blog` seeds the launch articles in `scripts/blog-posts.ts`, generating each cover
+from catalogue packshots into R2 (`blog/`). Post bodies support `## ` headings, `- ` and `1. `
+lists, and `**bold**`. Re-running updates posts by slug.
+
 ## How it works
 
 - Prices are stored in AUD. NZ visitors see NZD at the daily rate from `/api/rates`.
