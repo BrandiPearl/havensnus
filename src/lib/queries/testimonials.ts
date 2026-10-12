@@ -17,8 +17,8 @@ function mapRow(row: Record<string, unknown>): Testimonial {
 export async function getTestimonials(limit = 8): Promise<Testimonial[]> {
   if (!isSupabaseConfigured()) return [];
 
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+  const { createPublicClient } = await import("@/lib/supabase/public");
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("testimonials")

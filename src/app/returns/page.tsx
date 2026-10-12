@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { InfoPage, InfoSection, InfoCta } from "@/components/layout/info-page";
 
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "Returns",
   description: "Returns, refunds and what to do if your Haven Snus order arrives damaged or incorrect.",

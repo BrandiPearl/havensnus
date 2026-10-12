@@ -3,6 +3,8 @@ import { getBrands, getProductSlugs } from "@/lib/queries/products";
 import { getBlogSlugs } from "@/lib/queries/blog";
 import { SITE_URL } from "@/lib/site";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const page = (path: string, changeFrequency: "daily" | "weekly" | "monthly" | "yearly", priority: number) => ({

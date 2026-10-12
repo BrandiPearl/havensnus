@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Logo } from "@/components/ui/logo";
-import { AGE_COOKIE, AGE_COOKIE_MAX_AGE } from "@/lib/age-gate";
+import { AGE_ATTR, AGE_COOKIE, AGE_COOKIE_MAX_AGE, isAgeVerified } from "@/lib/age-gate";
+
+const listeners = new Set<() => void>();
+const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+};
 
 /**
- * Blocking 18+ confirmation. The server decides whether to render it (from
- * the cookie), so returning visitors never see a flash of the overlay.
+ * Blocking 18+ confirmation. It is rendered for everyone so pages stay
+ * cacheable; CSS hides it before paint for visitors who have confirmed.
  */
-export function AgeGate({ initiallyVerified }: { initiallyVerified: boolean }) {
-  const [verified, setVerified] = useState(initiallyVerified);
+export function AgeGate() {
+  // Cached HTML always includes the overlay (hidden by CSS for verified visitors);
+  // on the client this reads the attribute the inline head script set.
+  const verified = useSyncExternalStore(subscribe, isAgeVerified, () => false);
   const [declined, setDeclined] = useState(false);
 
   useEffect(() => {
@@ -24,11 +32,13 @@ export function AgeGate({ initiallyVerified }: { initiallyVerified: boolean }) {
 
   function confirm() {
     document.cookie = `${AGE_COOKIE}=1; path=/; max-age=${AGE_COOKIE_MAX_AGE}; samesite=lax`;
-    setVerified(true);
+    document.documentElement.setAttribute(AGE_ATTR, "");
+    listeners.forEach((cb) => cb());
   }
 
   return (
     <div
+      id="age-gate"
       role="dialog"
       aria-modal="true"
       aria-labelledby="age-gate-title"

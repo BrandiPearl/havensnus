@@ -4,6 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { getBlogPosts } from "@/lib/queries/blog";
 import { CoverImage } from "@/components/ui/cover-image";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Nicotine Pouch Guides & News",
   description:

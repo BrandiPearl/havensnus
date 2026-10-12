@@ -10,6 +10,8 @@ import { BlogPreview } from "@/components/sections/blog-preview";
 import { getSiteSettings } from "@/lib/queries/settings";
 import { SITE_URL } from "@/lib/site";
 
+export const revalidate = 600;
+
 export const metadata: Metadata = {
   title: { absolute: "Haven Snus | Nicotine Pouches Delivered Across Australia & New Zealand" },
   description:

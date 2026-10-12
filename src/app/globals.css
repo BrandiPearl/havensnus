@@ -605,3 +605,6 @@
     animation: heroRing 5.5s ease-out infinite;
   }
 }
+
+/* Returning visitors who already confirmed 18+ (set before paint by an inline head script). */
+html[data-age-ok] #age-gate { display: none !important; }

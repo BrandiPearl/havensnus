@@ -10,6 +10,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   const posts = await getBlogSlugs();
   return posts.map((p) => ({ slug: p.slug }));

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { Inter, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSiteSettings } from "@/lib/queries/settings";
 import { getNavBrands } from "@/lib/queries/products";
-import { getRequestCurrencyHint } from "@/lib/request-currency";
-import { AGE_COOKIE } from "@/lib/age-gate";
+import { AGE_GATE_SCRIPT } from "@/lib/age-gate";
 import { SITE_URL } from "@/lib/site";
 
 // Body copy. Deliberately invisible — it carries the reading, not the voice.
@@ -85,23 +83,19 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [settings, hint, store, navBrands] = await Promise.all([
-    getSiteSettings(),
-    getRequestCurrencyHint(),
-    cookies(),
-    getNavBrands(),
-  ]);
+  const [settings, navBrands] = await Promise.all([getSiteSettings(), getNavBrands()]);
 
   return (
-    <html lang="en-AU" className={`${inter.variable} ${archivo.variable} ${jetbrains.variable}`}>
+    <html
+      lang="en-AU"
+      className={`${inter.variable} ${archivo.variable} ${jetbrains.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: AGE_GATE_SCRIPT }} />
+      </head>
       <body className="font-sans antialiased bg-white text-slate-900">
-        <AppShell
-          settings={settings}
-          initialCountry={hint.country}
-          initialCurrency={hint.cookieCurrency || hint.detectedCurrency}
-          ageVerified={store.get(AGE_COOKIE)?.value === "1"}
-          navBrands={navBrands}
-        >
+        <AppShell settings={settings} navBrands={navBrands}>
           {children}
         </AppShell>
       </body>

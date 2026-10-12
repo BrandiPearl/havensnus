@@ -14,16 +14,10 @@ import type { NavBrand } from "@/lib/queries/products";
 
 export function AppShell({
   settings,
-  initialCountry,
-  initialCurrency,
-  ageVerified,
   navBrands,
   children,
 }: {
   settings: SiteSettings;
-  initialCountry?: string;
-  initialCurrency?: string;
-  ageVerified: boolean;
   navBrands: NavBrand[];
   children: React.ReactNode;
 }) {
@@ -34,14 +28,14 @@ export function AppShell({
 
   return (
     <SettingsProvider settings={settings}>
-      <CurrencyProvider initialCountry={initialCountry} initialCurrency={initialCurrency}>
+      <CurrencyProvider>
         <CartProvider>
           <Nav brands={navBrands} />
           <main>{children}</main>
           <Footer />
           <ScrollToTop />
           <TawkChat />
-          <AgeGate initiallyVerified={ageVerified} />
+          <AgeGate />
         </CartProvider>
       </CurrencyProvider>
     </SettingsProvider>

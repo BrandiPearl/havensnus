@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getBrands } from "@/lib/queries/products";
 import { BrandTile } from "@/components/ui/brand-tile";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Nicotine Pouch Brands",
   description:

@@ -5,6 +5,8 @@ import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
 import { getSiteSettings } from "@/lib/queries/settings";
 import { formatAud } from "@/lib/utils";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:

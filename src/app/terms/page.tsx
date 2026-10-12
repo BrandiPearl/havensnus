@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { InfoPage, InfoSection } from "@/components/layout/info-page";
 
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "Terms & Conditions",
   description: "The terms that apply when you use havensnus.com and place an order.",

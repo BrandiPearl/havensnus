@@ -3,6 +3,8 @@ import { ContactForm } from "./contact-form";
 import { Mail, Clock } from "lucide-react";
 import { getSiteSettings } from "@/lib/queries/settings";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Contact Us",
   description:

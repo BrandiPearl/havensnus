@@ -3,6 +3,8 @@ import { InfoPage, InfoSection, InfoCta } from "@/components/layout/info-page";
 import { getSiteSettings } from "@/lib/queries/settings";
 import { formatAud } from "@/lib/utils";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Shipping",
   description: "Tracked delivery of nicotine pouches across Australia and New Zealand. Rates, timing and what to expect.",

@@ -5,6 +5,7 @@ import { useCurrency } from "@/components/currency/currency-provider";
 
 export function CurrencySelect() {
   const { currency, setCurrency } = useCurrency();
+  // The rendered currency falls back to AUD until the NZD rate loads; the picker shows the choice.
 
   return (
     <label>

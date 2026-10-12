@@ -29,6 +29,15 @@ products in place, matched on `(source_site, source_id)`.
 - Visitors confirm they are 18+ on first visit (`hs_age_ok` cookie). Australian orders also
   confirm a valid prescription at checkout.
 
+## Caching (Workers free plan)
+
+The free plan allows 10ms of CPU per request, which a Next.js render exceeds. So the storefront
+is statically rendered and cached (ISR): pages are stored in R2 under `incremental-cache/` and
+served before Next.js boots (`enableCacheInterception`). Pages refresh on their `revalidate`
+interval, and CMS saves invalidate them immediately through the Durable Object tag cache.
+Storefront code must not read `cookies()` or `headers()` (that makes a page dynamic again);
+the age gate and currency are read in the browser instead. The CMS is `force-dynamic`.
+
 ## Deploy
 
 `npm run deploy` builds with OpenNext and deploys the `havensnus` Worker. Set the same variables

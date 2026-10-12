@@ -17,6 +17,14 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// Each product page is rendered on its first visit, then served from cache for an
+// hour (or until the CMS saves it), so crawlers and shoppers rarely trigger a render.
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);

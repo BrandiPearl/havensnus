@@ -8,16 +8,16 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { selectProductImages } from "@/lib/product-image";
 
 /** Listing columns: everything a card or filter needs, without the long description. */
-const LIST_SELECT = `id, slug, sku, name, short_description, price, compare_at_price, brand,
-  product_line, tags, strength_mg, strength_level, flavour, flavour_family, pouch_format,
-  pouches_per_tin, stock_quantity, in_stock, is_featured, is_new, created_at, updated_at,
+const LIST_SELECT = `id, slug, sku, name, price, compare_at_price, brand, product_line,
+  strength_mg, strength_level, flavour, flavour_family, pouch_format, pouches_per_tin,
+  stock_quantity, in_stock, is_featured, is_new, created_at,
   brands(name), product_images(id, url, alt, position, is_primary)`;
 
 const DETAIL_SELECT = `*, brands(name), product_images(*), product_features(*)`;
 
 async function db() {
-  const { createClient } = await import("@/lib/supabase/server");
-  return createClient();
+  const { createPublicClient } = await import("@/lib/supabase/public");
+  return createPublicClient();
 }
 
 function text(value: unknown) {

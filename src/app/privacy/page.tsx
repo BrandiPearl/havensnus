@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { InfoPage, InfoSection } from "@/components/layout/info-page";
 import { BUSINESS_EMAIL, mailHref } from "@/lib/contact-info";
 
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How Haven Snus collects, uses and protects your personal information.",

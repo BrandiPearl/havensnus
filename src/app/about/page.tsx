@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { InfoPage, InfoSection, InfoCta } from "@/components/layout/info-page";
 
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "About Us",
   description: "Haven Snus stocks 30+ brands of tobacco-free nicotine pouches for adults across Australia and New Zealand.",

@@ -35,8 +35,8 @@ export const SETTING_DEFAULTS: SiteSettings = { ...TEXT_DEFAULTS, ...SHIPPING_DE
 export async function getSiteSettings(): Promise<SiteSettings> {
   if (!isSupabaseConfigured()) return SETTING_DEFAULTS;
 
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+  const { createPublicClient } = await import("@/lib/supabase/public");
+  const supabase = createPublicClient();
   const { data, error } = await supabase.from("site_settings").select("key, value");
 
   if (error || !data?.length) {

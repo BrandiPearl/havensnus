@@ -5,8 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 async function blogClient() {
   const admin = createAdminClient();
   if (admin) return admin;
-  const { createClient } = await import("@/lib/supabase/server");
-  return createClient();
+  const { createPublicClient } = await import("@/lib/supabase/public");
+  return createPublicClient();
 }
 
 function mapRow(row: Record<string, unknown>): BlogPost {
