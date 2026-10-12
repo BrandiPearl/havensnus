@@ -49,7 +49,7 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   const password = str(formData, "password");
   const expected = process.env.ADMIN_PASSWORD;
   if (!expected) {
-    return fail("ADMIN_PASSWORD is not set in .env.local.");
+    return fail("ADMIN_PASSWORD is not configured on the server.");
   }
   if (password !== expected) {
     return fail("That password is not correct.");
