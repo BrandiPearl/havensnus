@@ -242,3 +242,32 @@ export async function getNavBrands(limit = 12): Promise<NavBrand[]> {
   if (error) return [];
   return (data ?? []).map((row) => ({ name: String(row.name), slug: String(row.slug) }));
 }
+
+/** Products by slug, in the order given (missing or inactive slugs are skipped). */
+export async function getProductsBySlugs(slugs: string[]): Promise<Product[]> {
+  if (!isSupabaseConfigured() || slugs.length === 0) return [];
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from("products")
+    .select(LIST_SELECT)
+    .eq("is_active", true)
+    .in("slug", slugs);
+  if (error) return [];
+  const bySlug = new Map((data ?? []).map((row) => [String(row.slug), mapRow(row as Record<string, unknown>)]));
+  return slugs.map((s) => bySlug.get(s)).filter((p): p is Product => Boolean(p));
+}
+
+/** Lowest active price, for "From $x" messaging. */
+export async function getLowestPrice(): Promise<number | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await db();
+  const { data } = await supabase
+    .from("products")
+    .select("price")
+    .eq("is_active", true)
+    .gt("price", 0)
+    .order("price", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data ? Number(data.price) : null;
+}
