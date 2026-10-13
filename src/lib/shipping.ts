@@ -1,18 +1,31 @@
+export type ShippingMethod = "standard" | "express";
+
 export type ShippingRates = {
-  shipping_au: number;
-  free_shipping_threshold: number;
+  shipping_standard: number;
+  shipping_express: number;
 };
 
 export const SHIPPING_DEFAULTS: ShippingRates = {
-  shipping_au: 9.95,
-  free_shipping_threshold: 150,
+  shipping_standard: 25,
+  shipping_express: 40,
 };
 
-/** Flat rate, free once the AUD subtotal reaches the threshold. */
-export function shippingFor(subtotal: number, rates: ShippingRates) {
-  if (subtotal <= 0) return 0;
-  if (rates.free_shipping_threshold > 0 && subtotal >= rates.free_shipping_threshold) return 0;
-  return rates.shipping_au;
+export const SHIPPING_METHODS: { id: ShippingMethod; label: string; detail: string }[] = [
+  { id: "standard", label: "Standard Shipping", detail: "Tracked delivery Australia-wide" },
+  { id: "express", label: "Express Shipping", detail: "Priority dispatch, tracked express delivery" },
+];
+
+export function isShippingMethod(value: unknown): value is ShippingMethod {
+  return value === "standard" || value === "express";
+}
+
+/** Flat rate for the chosen method. */
+export function shippingFor(method: ShippingMethod, rates: ShippingRates) {
+  return method === "express" ? rates.shipping_express : rates.shipping_standard;
+}
+
+export function shippingLabel(method: ShippingMethod) {
+  return SHIPPING_METHODS.find((m) => m.id === method)?.label ?? "Shipping";
 }
 
 export const AU_STATES = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];

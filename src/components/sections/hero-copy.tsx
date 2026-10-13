@@ -19,14 +19,14 @@ export function HeroCopy() {
     reduceMotion ? {} : { custom: delay, variants: fade, initial: "hidden", animate: "show" };
 
   return (
-    <div className="mx-auto max-w-2xl text-center">
+    <div className="mx-auto max-w-3xl text-center">
       <motion.h1
         {...anim(0.1)}
         className="display-xl text-white !text-[clamp(2.25rem,5vw,3.75rem)] !leading-[1.02]"
       >
-        30+ brands.{" "}
-        <span className="bg-gradient-to-r from-[#3fb39b] via-[#e9ae3a] to-[#e0217a] bg-clip-text text-transparent">
-          One haven.
+        Buy nicotine pouches
+        <span className="mt-1 block bg-gradient-to-r from-[#3fb39b] via-[#e9ae3a] to-[#e0217a] bg-clip-text text-[0.62em] text-transparent">
+          30+ brands. One haven.
         </span>
       </motion.h1>
 

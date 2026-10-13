@@ -27,6 +27,7 @@ export type OrderEmailData = {
   items: { name: string; sku: string; qty: number; price: number }[];
   subtotal: number;
   shipping: number;
+  shippingMethod: string;
   total: number;
   displayTotal?: string;
   notes?: string;
@@ -45,7 +46,7 @@ function itemsTable(data: OrderEmailData) {
         )
         .join("")}
       ${line("Subtotal", formatAud(data.subtotal))}
-      ${line("Shipping", data.shipping === 0 ? "Free" : formatAud(data.shipping))}
+      ${line(escapeHtml(data.shippingMethod), formatAud(data.shipping))}
       ${line("Total (AUD)", formatAud(data.total), true)}
     </table>`;
 }
@@ -54,7 +55,7 @@ function itemsText(data: OrderEmailData) {
   return [
     ...data.items.map((i) => `${i.qty} x ${i.name} (${i.sku}) ${formatAud(i.price * i.qty)}`),
     `Subtotal: ${formatAud(data.subtotal)}`,
-    `Shipping: ${data.shipping === 0 ? "Free" : formatAud(data.shipping)}`,
+    `${data.shippingMethod}: ${formatAud(data.shipping)}`,
     `Total (AUD): ${formatAud(data.total)}`,
   ].join("\n");
 }

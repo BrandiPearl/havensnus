@@ -51,10 +51,7 @@ export async function Hero() {
     { label: "Brands", value: brands.length || "30", unit: "+" },
     { label: "Products", value: productCount || "500", unit: "" },
     { label: "Delivering", value: "Australia-wide" },
-    {
-      label: "Free shipping from",
-      value: settings.free_shipping_threshold > 0 ? <Price amount={settings.free_shipping_threshold} /> : "Always",
-    },
+    { label: "Tracked shipping from", value: <Price amount={settings.shipping_standard} /> },
   ];
 
   return (

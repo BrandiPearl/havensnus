@@ -309,8 +309,8 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
   ];
 
   const rates: [string, number | null][] = [
-    ["shipping_au", num(formData, "shipping_au")],
-    ["free_shipping_threshold", num(formData, "free_shipping_threshold")],
+    ["shipping_standard", num(formData, "shipping_standard")],
+    ["shipping_express", num(formData, "shipping_express")],
   ];
   for (const [key, value] of rates) {
     if (value == null || value < 0) return fail("Shipping amounts must be 0 or more.");

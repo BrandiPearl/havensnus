@@ -1,3 +1,5 @@
+import type { ShippingMethod } from "@/lib/shipping";
+
 export type OrderInput = {
   first_name: string;
   last_name: string;
@@ -9,6 +11,7 @@ export type OrderInput = {
   state: string;
   postcode: string;
   country: "AU";
+  shipping_method: ShippingMethod;
   notes?: string;
   age_confirmed: boolean;
   prescription_confirmed: boolean;

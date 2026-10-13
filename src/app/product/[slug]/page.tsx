@@ -183,12 +183,12 @@ export default async function ProductPage({ params }: Props) {
                 {
                   icon: Truck,
                   term: "Delivery",
-                  detail:
-                    settings.free_shipping_threshold > 0 ? (
-                      <>Tracked, Australia-wide. Free over <Price amount={settings.free_shipping_threshold} /></>
-                    ) : (
-                      "Tracked, Australia-wide"
-                    ),
+                  detail: (
+                    <>
+                      Tracked, Australia-wide. Standard <Price amount={settings.shipping_standard} />, Express{" "}
+                      <Price amount={settings.shipping_express} />
+                    </>
+                  ),
                 },
                 { icon: PackageCheck, term: "Packaging", detail: "Plain, discreet outer box" },
                 { icon: ShieldCheck, term: "Contents", detail: "Tobacco-free nicotine pouches. 18+ only" },

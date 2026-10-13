@@ -262,7 +262,7 @@ We do not take card details on the website. After you place an order, we email y
 
 ## 4. Tracked delivery
 
-Every order ships with tracking, and we email you the tracking number when it leaves. Shipping is a flat rate, and it is free once your order passes the free shipping threshold shown at the top of the site.
+Every order ships with tracking, and we email you the tracking number when it leaves. At checkout you choose **Standard** or **Express** shipping, each a flat rate per order.
 
 Parcels go out in plain packaging with no product branding on the outside.
 

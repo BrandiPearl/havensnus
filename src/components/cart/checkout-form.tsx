@@ -9,7 +9,8 @@ import { useCurrency } from "@/components/currency/currency-provider";
 import { useSettings } from "@/components/layout/settings-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
 import { submitOrder } from "@/app/storefront-actions";
-import { AU_STATES, shippingFor } from "@/lib/shipping";
+import { AU_STATES, SHIPPING_METHODS, shippingFor, type ShippingMethod } from "@/lib/shipping";
+import { cn } from "@/lib/utils";
 import { AuFlag } from "@/components/ui/au-flag";
 
 type FormState = {
@@ -46,6 +47,7 @@ export function CheckoutForm() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [prescriptionConfirmed, setPrescriptionConfirmed] = useState(false);
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("standard");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -58,10 +60,11 @@ export function CheckoutForm() {
     if (!items.length) return;
     setError("");
     setLoading(true);
-    const total = subtotal + shippingFor(subtotal, settings);
+    const total = subtotal + shippingFor(shippingMethod, settings);
     const result = await submitOrder({
       ...form,
       country: "AU",
+      shipping_method: shippingMethod,
       age_confirmed: ageConfirmed,
       prescription_confirmed: prescriptionConfirmed,
       display_total: format(total),
@@ -151,6 +154,38 @@ export function CheckoutForm() {
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="mb-3 font-display text-lg font-bold text-slate-900">Shipping</legend>
+          <div className="space-y-2.5">
+            {SHIPPING_METHODS.map((m) => {
+              const selected = shippingMethod === m.id;
+              return (
+                <label
+                  key={m.id}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors",
+                    selected ? "border-orange-600 bg-orange-50/60" : "border-slate-200 hover:border-slate-300"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="shipping_method"
+                    value={m.id}
+                    checked={selected}
+                    onChange={() => setShippingMethod(m.id)}
+                    className="h-4 w-4 accent-orange-600"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-slate-900">{m.label}</span>
+                    <span className="block text-xs text-slate-500">{m.detail}</span>
+                  </span>
+                  <span className="text-sm font-bold text-slate-900">{format(shippingFor(m.id, settings))}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
         <div>
           <label className="label" htmlFor="notes">
             Order notes (optional)
@@ -206,7 +241,7 @@ export function CheckoutForm() {
           ))}
         </ul>
         <div className="border-t border-slate-200 pt-4">
-          <OrderSummaryLines subtotal={subtotal} />
+          <OrderSummaryLines subtotal={subtotal} method={shippingMethod} />
         </div>
         <Link href="/cart" className="mt-4 block text-center text-xs font-semibold text-orange-700 hover:underline">
           Edit cart

@@ -14,8 +14,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-function faqSections(freeFrom: number, rate: number) {
-  const free = freeFrom > 0 ? ` Orders over ${formatAud(freeFrom)} ship free.` : "";
+function faqSections(standard: number, express: number) {
   return [
     {
       section: "About nicotine pouches",
@@ -64,7 +63,7 @@ function faqSections(freeFrom: number, rate: number) {
       faqs: [
         {
           q: "Where do you ship?",
-          a: `Anywhere in Australia, and only within Australia. Every order is sent with tracking, and shipping is a flat ${formatAud(rate)}.${free}`,
+          a: `Anywhere in Australia, and only within Australia. Every order is sent with tracking. Choose Standard shipping (${formatAud(standard)}) or Express shipping (${formatAud(express)}) at checkout.`,
         },
         {
           q: "How do I pay?",
@@ -89,7 +88,7 @@ function faqSections(freeFrom: number, rate: number) {
 
 export default async function FAQPage() {
   const settings = await getSiteSettings();
-  const sections = faqSections(settings.free_shipping_threshold, settings.shipping_au);
+  const sections = faqSections(settings.shipping_standard, settings.shipping_express);
 
   return (
     <div className="min-h-screen bg-white">

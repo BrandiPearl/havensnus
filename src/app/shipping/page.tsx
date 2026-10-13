@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 
 export default async function ShippingPage() {
   const settings = await getSiteSettings();
-  const free = settings.free_shipping_threshold;
 
   return (
     <InfoPage
@@ -25,20 +24,22 @@ export default async function ShippingPage() {
         <table>
           <thead>
             <tr>
-              <th>Delivery</th>
-              <th>Flat rate</th>
-              <th>Free from</th>
+              <th>Option</th>
+              <th>Price</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Anywhere in Australia</td>
-              <td>{formatAud(settings.shipping_au)}</td>
-              <td>{free > 0 ? formatAud(free) : "–"}</td>
+              <td>Standard Shipping (tracked)</td>
+              <td>{formatAud(settings.shipping_standard)}</td>
+            </tr>
+            <tr>
+              <td>Express Shipping (tracked, priority dispatch)</td>
+              <td>{formatAud(settings.shipping_express)}</td>
             </tr>
           </tbody>
         </table>
-        <p>All amounts are in Australian dollars. The free shipping threshold applies to the order subtotal.</p>
+        <p>Flat rates in Australian dollars, per order. You choose the option at checkout.</p>
       </InfoSection>
 
       <InfoSection title="When your order ships">

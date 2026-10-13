@@ -25,16 +25,10 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-sm font-bold text-slate-900 mb-1">Shipping</h2>
-        <p className="text-xs text-slate-500 mb-5">Flat rates in AUD. Set the threshold to 0 to turn free shipping off.</p>
+        <p className="text-xs text-slate-500 mb-5">Flat rates in AUD, offered as options at checkout.</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field name="shipping_au" label="Flat rate" defaultValue={String(settings.shipping_au)} type="number" step="0.01" />
-          <Field
-            name="free_shipping_threshold"
-            label="Free shipping from"
-            defaultValue={String(settings.free_shipping_threshold)}
-            type="number"
-            step="0.01"
-          />
+          <Field name="shipping_standard" label="Standard shipping" defaultValue={String(settings.shipping_standard)} type="number" step="0.01" />
+          <Field name="shipping_express" label="Express shipping" defaultValue={String(settings.shipping_express)} type="number" step="0.01" />
         </div>
       </div>
 

@@ -21,8 +21,8 @@ const TEXT_DEFAULTS = {
   address: "",
   seo_title: "Haven Snus | Nicotine Pouches Delivered Australia-Wide",
   seo_description:
-    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Tracked delivery Australia-wide, free over $150.",
-  announcement: "Free tracked shipping on orders over $150",
+    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Tracked Standard and Express delivery Australia-wide.",
+  announcement: "Tracked Standard and Express shipping Australia-wide",
   announcement_link_text: "Shop all brands",
   announcement_link_url: "/brands",
 };
@@ -79,7 +79,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     announcement: text("announcement"),
     announcement_link_text: text("announcement_link_text"),
     announcement_link_url: text("announcement_link_url"),
-    shipping_au: number("shipping_au"),
-    free_shipping_threshold: number("free_shipping_threshold"),
+    shipping_standard: number("shipping_standard"),
+    shipping_express: number("shipping_express"),
   };
 }

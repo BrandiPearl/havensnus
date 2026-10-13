@@ -15,7 +15,7 @@ const REASONS = [
   },
   {
     title: "Tracked delivery Australia-wide",
-    body: "Every order ships with tracking to anywhere in Australia, and shipping is free once your order passes the threshold.",
+    body: "Every order ships with tracking to anywhere in Australia. Choose Standard, or Express when you need it sooner.",
   },
   {
     title: "Honest strength grading",

@@ -37,7 +37,8 @@ lists, and `**bold**`. Re-running updates posts by slug.
 - Prices are in AUD and the shop delivers within Australia only.
 - Checkout records an order in `orders` (no online payment). Prices and shipping are recalculated
   on the server. Staff mark orders paid and shipped in `/admin/orders`, which emails the customer.
-- Shipping rates and the free-shipping threshold are edited in `/admin/settings`.
+- Checkout offers Standard and Express shipping (flat rates, edited in `/admin/settings`). There is
+  no free-shipping threshold.
 - Visitors confirm they are 18+ on first visit (`hs_age_ok` cookie). Checkout also requires
   confirming a valid prescription.
 

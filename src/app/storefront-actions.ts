@@ -10,7 +10,7 @@ import {
 } from "@/lib/email/templates";
 import { BUSINESS_EMAIL } from "@/lib/contact-info";
 import { getSiteSettings } from "@/lib/queries/settings";
-import { shippingFor } from "@/lib/shipping";
+import { isShippingMethod, shippingFor, shippingLabel } from "@/lib/shipping";
 import { MAX_QTY_PER_LINE, createOrderReference, type OrderInput } from "@/lib/orders";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -57,6 +57,8 @@ export async function submitOrder(
   }
   if (!input.age_confirmed) return { success: false, error: "Please confirm you are 18 or older." };
   if (!customer.state) return { success: false, error: "Select your state." };
+  if (!isShippingMethod(input.shipping_method)) return { success: false, error: "Choose Standard or Express shipping." };
+  const method = input.shipping_method;
   if (!input.prescription_confirmed) {
     return { success: false, error: "Australian orders require confirmation that you hold a valid prescription." };
   }
@@ -86,7 +88,7 @@ export async function submitOrder(
 
   const settings = await getSiteSettings();
   const subtotal = round2(items.reduce((sum, i) => sum + i.price * i.qty, 0));
-  const shipping = round2(shippingFor(subtotal, settings));
+  const shipping = round2(shippingFor(method, settings));
   const total = round2(subtotal + shipping);
   const reference = createOrderReference();
 
@@ -102,7 +104,7 @@ export async function submitOrder(
     currency: "AUD",
     display_total: clean(input.display_total, 40) || null,
     age_confirmed: true,
-    internal_notes: "Customer confirmed a valid prescription at checkout.",
+    internal_notes: `${shippingLabel(method)}. Customer confirmed a valid prescription at checkout.`,
     status: "pending",
   });
   if (insertError) {
@@ -125,6 +127,7 @@ export async function submitOrder(
       items,
       subtotal,
       shipping,
+      shippingMethod: shippingLabel(method),
       total,
       displayTotal: clean(input.display_total, 40) || undefined,
       notes: customer.notes ?? undefined,
