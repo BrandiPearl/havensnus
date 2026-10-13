@@ -10,6 +10,7 @@ import { useSettings } from "@/components/layout/settings-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
 import { submitOrder } from "@/app/storefront-actions";
 import { AU_STATES, shippingFor } from "@/lib/shipping";
+import { AuFlag } from "@/components/ui/au-flag";
 
 type FormState = {
   first_name: string;
@@ -110,7 +111,15 @@ export function CheckoutForm() {
         </fieldset>
 
         <fieldset className="space-y-4">
-          <legend className="mb-1 text-sm font-bold text-slate-900">Delivery address (Australia only)</legend>
+          <legend className="mb-1 text-sm font-bold text-slate-900">Delivery address</legend>
+          <div>
+            <span className="label">Country</span>
+            <div className="flex items-center gap-3 rounded-md border border-orange-600 bg-orange-50 px-3 py-2.5 text-sm font-semibold text-orange-800">
+              <AuFlag className="h-4 w-8" />
+              Australia
+              <span className="ml-auto text-xs font-normal text-slate-500">We ship within Australia only</span>
+            </div>
+          </div>
           <Field label="Street address" name="address_line1" value={form.address_line1} onChange={handleChange} autoComplete="address-line1" required />
           <Field label="Apartment, unit, etc. (optional)" name="address_line2" value={form.address_line2} onChange={handleChange} autoComplete="address-line2" />
           <div className="grid gap-4 sm:grid-cols-3">

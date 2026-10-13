@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
+import { AuFlag } from "@/components/ui/au-flag";
 import { CartButton } from "@/components/cart/cart-button";
 import { SearchDialog } from "@/components/layout/search-dialog";
 import { useCurrency } from "@/components/currency/currency-provider";
@@ -223,6 +224,13 @@ export function Nav({ brands }: { brands: NavBrand[] }) {
             </nav>
 
             <div className="flex items-center gap-1.5">
+              <span
+                className="mr-1 inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700"
+                title="Shipping within Australia. Prices in AUD."
+              >
+                <AuFlag />
+                <span>AUD</span>
+              </span>
 
               <button
                 type="button"
