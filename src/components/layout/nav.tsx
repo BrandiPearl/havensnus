@@ -34,7 +34,7 @@ function navLinks(brands: NavBrand[]): NavLinkItem[] {
       href: "/products",
       children: brands.map((b) => ({ label: b.name, href: `/products?brand=${b.slug}` })),
     },
-    { label: "Brands", href: "/brands" },
+    { label: "See all brands", href: "/brands" },
     { label: "Strengths", href: "/products?sort=strength-asc", children: STRENGTH_LINKS },
     { label: "FAQ", href: "/faq" },
     { label: "Blog", href: "/blog" },
