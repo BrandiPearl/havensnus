@@ -14,8 +14,7 @@ const fade = {
 };
 
 const EYEBROW = "Nicotine pouches · Delivered Australia-wide";
-const BODY =
-  "ZYN, VELO, PABLO, KILLA and 30+ more brands. Every strength from light to extreme, every flavour from cool mint to cola, shipped with tracking to your door.";
+const BODY = "ZYN, VELO, PABLO, KILLA and 30+ more brands, in every strength and flavour. Tracked delivery Australia-wide.";
 
 export function HeroCopy() {
   const reduceMotion = useReducedMotion();
@@ -28,12 +27,12 @@ export function HeroCopy() {
         {EYEBROW}
       </motion.p>
 
-      <motion.h1 {...anim(0.15)} className="display-xl text-white">
+      <motion.h1 {...anim(0.15)} className="display-xl text-white !text-[clamp(2.25rem,4.4vw,3.5rem)] !leading-[1.04]">
         Your haven for nicotine pouches
         <span className="text-orange-500">.</span>
       </motion.h1>
 
-      <motion.p {...anim(0.28)} className="mt-5 max-w-xl text-lg leading-relaxed text-slate-200">
+      <motion.p {...anim(0.28)} className="mt-4 max-w-lg text-base leading-relaxed text-slate-300 sm:text-[1.0625rem]">
         {BODY}
       </motion.p>
 
