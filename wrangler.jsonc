@@ -29,16 +29,16 @@
       "bucket_name": "havensnusbucket"
     }
   ],
-  "durable_objects": {
-    "bindings": [
-      { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
-      { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
-    ]
-  },
+  // v1 created the DO-backed ISR queue and tag cache. They exhausted the free
+  // plan's 100k Durable Object requests/day, so v2 removes them (see open-next.config.ts).
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"]
+    },
+    {
+      "tag": "v2",
+      "deleted_classes": ["DOQueueHandler", "DOShardedTagCache"]
     }
   ]
 }

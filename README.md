@@ -46,7 +46,10 @@ lists, and `**bold**`. Re-running updates posts by slug.
 The free plan allows 10ms of CPU per request, which a Next.js render exceeds. So the storefront
 is statically rendered and cached (ISR): pages are stored in R2 under `incremental-cache/` and
 served before Next.js boots (`enableCacheInterception`). Pages refresh on their `revalidate`
-interval, and CMS saves invalidate them immediately through the Durable Object tag cache.
+interval through OpenNext's memory queue, and CMS saves (and Settings, Refresh site cache) purge
+the R2 cache directly (`src/lib/cache-purge.ts`). Do not add Durable Object overrides (DO queue or
+tag cache): a DO tag cache is checked on every cache hit and exhausted the free plan's 100k DO
+requests per day, which took the site down.
 Storefront code must not read `cookies()` or `headers()` (that makes a page dynamic again);
 the age gate is read in the browser instead. The CMS is `force-dynamic`.
 

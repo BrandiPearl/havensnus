@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { purgeStorefrontCache } from "@/lib/cache-purge";
 import { redirect } from "next/navigation";
 import {
   clearCmsSessionCookie,
@@ -30,19 +31,9 @@ function ok(success: string): ActionState {
   return { success };
 }
 
-function revalidateStorefront(productSlug?: string, blogSlug?: string) {
-  revalidatePath("/admin");
-  revalidatePath("/admin/products");
-  revalidatePath("/admin/blog");
-  revalidatePath("/admin/settings");
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidatePath("/brands");
-  revalidatePath("/blog");
-  revalidatePath("/contact");
-  if (productSlug) revalidatePath(`/product/${productSlug}`);
-  if (blogSlug) revalidatePath(`/blog/${blogSlug}`);
+/** Storefront pages are cached in R2; purge it so changes show on the next visit. */
+async function revalidateStorefront() {
+  await purgeStorefrontCache().catch((err) => console.error("purgeStorefrontCache:", err));
 }
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -160,7 +151,7 @@ export async function saveProduct(_prev: ActionState, formData: FormData): Promi
     if (error) return fail(error.message);
   }
 
-  revalidateStorefront(slug);
+  await revalidateStorefront();
   redirect(`/admin/products/${productId}/edit`);
 }
 
@@ -171,7 +162,7 @@ export async function deleteProduct(formData: FormData) {
   if (!id) return;
   const { error } = await admin.from("products").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidateStorefront();
+  await revalidateStorefront();
   redirect("/admin/products");
 }
 
@@ -220,7 +211,7 @@ export async function saveBlogPost(_prev: ActionState, formData: FormData): Prom
     postId = String(data.id);
   }
 
-  revalidateStorefront(undefined, slug);
+  await revalidateStorefront();
   redirect(`/admin/blog/${postId}/edit`);
 }
 
@@ -231,7 +222,7 @@ export async function deleteBlogPost(formData: FormData) {
   if (!id) return;
   const { error } = await admin.from("blog_posts").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidateStorefront();
+  await revalidateStorefront();
   redirect("/admin/blog");
 }
 
@@ -332,7 +323,7 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
     if (error) return fail(error.message);
   }
 
-  revalidatePath("/", "layout");
+  await revalidateStorefront();
   return ok("Settings saved.");
 }
 
@@ -367,7 +358,7 @@ export async function saveTestimonial(_prev: ActionState, formData: FormData): P
   }
 
   revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  await revalidateStorefront();
   redirect("/admin/testimonials");
 }
 
@@ -379,13 +370,13 @@ export async function deleteTestimonial(formData: FormData) {
   const { error } = await admin.from("testimonials").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  await revalidateStorefront();
   redirect("/admin/testimonials");
 }
 
 /** Clears every cached storefront page and data entry, e.g. after running the importer. */
 export async function refreshSiteCache(): Promise<ActionState> {
   await requireCmsSession();
-  revalidatePath("/", "layout");
-  return ok("Site cache cleared. Pages rebuild with fresh data on their next visit.");
+  const { purged } = await purgeStorefrontCache();
+  return ok(`Site cache cleared (${purged} cached entries). Pages rebuild with fresh data on their next visit.`);
 }
