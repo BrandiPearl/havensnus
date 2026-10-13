@@ -54,8 +54,7 @@ export default function TermsPage() {
 
       <InfoSection title="Consumer law">
         <p>
-          Nothing in these terms excludes rights you have under the Australian Consumer Law or the New
-          Zealand Consumer Guarantees Act.
+          Nothing in these terms excludes rights you have under the Australian Consumer Law.
         </p>
       </InfoSection>
     </InfoPage>

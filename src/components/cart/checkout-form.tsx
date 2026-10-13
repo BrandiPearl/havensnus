@@ -9,7 +9,7 @@ import { useCurrency } from "@/components/currency/currency-provider";
 import { useSettings } from "@/components/layout/settings-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
 import { submitOrder } from "@/app/storefront-actions";
-import { AU_STATES, NZ_REGIONS, shippingFor, type ShippingCountry } from "@/lib/shipping";
+import { AU_STATES, shippingFor } from "@/lib/shipping";
 
 type FormState = {
   first_name: string;
@@ -40,9 +40,8 @@ const EMPTY: FormState = {
 export function CheckoutForm() {
   const router = useRouter();
   const { items, ready, subtotal, clear } = useCart();
-  const { format, country: detected } = useCurrency();
+  const { format } = useCurrency();
   const settings = useSettings();
-  const [country, setCountry] = useState<ShippingCountry>(detected === "NZ" ? "NZ" : "AU");
   const [form, setForm] = useState<FormState>(EMPTY);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [prescriptionConfirmed, setPrescriptionConfirmed] = useState(false);
@@ -58,10 +57,10 @@ export function CheckoutForm() {
     if (!items.length) return;
     setError("");
     setLoading(true);
-    const total = subtotal + shippingFor(subtotal, country, settings);
+    const total = subtotal + shippingFor(subtotal, settings);
     const result = await submitOrder({
       ...form,
-      country,
+      country: "AU",
       age_confirmed: ageConfirmed,
       prescription_confirmed: prescriptionConfirmed,
       display_total: format(total),
@@ -91,8 +90,6 @@ export function CheckoutForm() {
     );
   }
 
-  const regions = country === "AU" ? AU_STATES : NZ_REGIONS;
-
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
       <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6">
@@ -113,41 +110,18 @@ export function CheckoutForm() {
         </fieldset>
 
         <fieldset className="space-y-4">
-          <legend className="mb-1 text-sm font-bold text-slate-900">Delivery address</legend>
-          <div>
-            <span className="label">Country</span>
-            <div className="grid grid-cols-2 gap-2">
-              {(["AU", "NZ"] as const).map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  aria-pressed={country === code}
-                  onClick={() => {
-                    setCountry(code);
-                    setForm((prev) => ({ ...prev, state: "" }));
-                  }}
-                  className={
-                    country === code
-                      ? "rounded-md border border-orange-600 bg-orange-50 px-3 py-2.5 text-sm font-semibold text-orange-800"
-                      : "rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:border-slate-300"
-                  }
-                >
-                  {code === "AU" ? "Australia" : "New Zealand"}
-                </button>
-              ))}
-            </div>
-          </div>
+          <legend className="mb-1 text-sm font-bold text-slate-900">Delivery address (Australia only)</legend>
           <Field label="Street address" name="address_line1" value={form.address_line1} onChange={handleChange} autoComplete="address-line1" required />
           <Field label="Apartment, unit, etc. (optional)" name="address_line2" value={form.address_line2} onChange={handleChange} autoComplete="address-line2" />
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label={country === "AU" ? "Suburb" : "Suburb / town"} name="suburb" value={form.suburb} onChange={handleChange} autoComplete="address-level2" required />
+            <Field label="Suburb" name="suburb" value={form.suburb} onChange={handleChange} autoComplete="address-level2" required />
             <div>
               <label className="label" htmlFor="state">
-                {country === "AU" ? "State" : "Region"}
+                State
               </label>
-              <select id="state" name="state" className="input" value={form.state} onChange={handleChange} required={country === "AU"} autoComplete="address-level1">
+              <select id="state" name="state" className="input" value={form.state} onChange={handleChange} required autoComplete="address-level1">
                 <option value="">Select</option>
-                {regions.map((r) => (
+                {AU_STATES.map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>
@@ -187,11 +161,9 @@ export function CheckoutForm() {
           <Check checked={ageConfirmed} onChange={setAgeConfirmed}>
             I confirm I am 18 years of age or older.
           </Check>
-          {country === "AU" && (
-            <Check checked={prescriptionConfirmed} onChange={setPrescriptionConfirmed}>
-              I hold a valid prescription for nicotine products, as required for personal importation into Australia.
-            </Check>
-          )}
+          <Check checked={prescriptionConfirmed} onChange={setPrescriptionConfirmed}>
+            I hold a valid prescription for nicotine products, as required for personal importation into Australia.
+          </Check>
         </div>
 
         <button type="submit" className="btn-primary w-full justify-center py-3.5" disabled={loading}>
@@ -225,7 +197,7 @@ export function CheckoutForm() {
           ))}
         </ul>
         <div className="border-t border-slate-200 pt-4">
-          <OrderSummaryLines subtotal={subtotal} country={country} />
+          <OrderSummaryLines subtotal={subtotal} />
         </div>
         <Link href="/cart" className="mt-4 block text-center text-xs font-semibold text-orange-700 hover:underline">
           Edit cart

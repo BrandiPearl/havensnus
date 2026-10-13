@@ -192,7 +192,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="mt-10 rounded-2xl bg-orange-600 p-8 text-white">
             <h3 className="text-xl font-bold">Find your next can</h3>
             <p className="mt-2 text-orange-100 text-sm leading-relaxed">
-              30+ brands in every strength and flavour, delivered across Australia and New Zealand.
+              30+ brands in every strength and flavour, delivered Australia-wide.
             </p>
             <div className="mt-5 flex gap-3">
               <Link

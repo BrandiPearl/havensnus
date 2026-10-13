@@ -38,7 +38,7 @@ export default function PrivacyPage() {
         <p>
           We share only what is needed with the services that help us run the shop: our courier, our email
           provider, our hosting and database providers, and our live chat provider. Some of these services
-          store data outside Australia and New Zealand.
+          store data outside Australia.
         </p>
       </InfoSection>
 

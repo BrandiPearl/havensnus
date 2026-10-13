@@ -13,9 +13,9 @@ import { SITE_URL } from "@/lib/site";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: { absolute: "Haven Snus | Nicotine Pouches Delivered Across Australia & New Zealand" },
+  title: { absolute: "Haven Snus | Nicotine Pouches Delivered Australia-Wide" },
   description:
-    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Every strength and flavour, with tracked delivery across Australia and New Zealand.",
+    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Every strength and flavour, with tracked delivery Australia-wide.",
   alternates: { canonical: "/" },
 };
 
@@ -41,10 +41,10 @@ export default async function HomePage() {
             "@type": "OnlineStore",
             name: "Haven Snus",
             description:
-              "Online store for tobacco-free nicotine pouches, delivering across Australia and New Zealand.",
+              "Online store for tobacco-free nicotine pouches, delivering Australia-wide.",
             url: SITE_URL,
             email: settings.email,
-            areaServed: ["AU", "NZ"],
+            areaServed: "AU",
             currenciesAccepted: "AUD",
           }),
         }}

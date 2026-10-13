@@ -18,34 +18,38 @@
  * and the R2_* variables.
  */
 
-import * as cheerio from "cheerio";
 import { createClient } from "@supabase/supabase-js";
-import {
-  HeadObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
-import sharp from "sharp";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import {
+  HTTP_HEADERS,
+  buildFeatures,
+  decode,
+  firstParagraph,
+  mapLimit,
+  mirrorImage,
+  r2Client,
+  rebrand,
+  sanitizeDescription,
+  sleep,
+} from "./lib/import-helpers";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 const SOURCE_SITE = "snusdownunder";
 const SOURCE_API = "https://www.snusdownunder.com/wp-json/wc/store/v1/products";
 const CACHE_FILE = path.resolve(process.cwd(), "scripts/.cache/snusdownunder.json");
+const BADGE_CACHE_FILE = path.resolve(process.cwd(), "scripts/.cache/snusdownunder-badges.json");
+const LISTING_URL = "https://www.snusdownunder.com/buy-nicotine-pouches/";
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const FROM_CACHE = args.includes("--from-cache");
 const SKIP_IMAGES = args.includes("--skip-images");
+// The shop sells everything as available by default; pass --real-stock to mirror the source's stock.
+const REAL_STOCK = args.includes("--real-stock");
 const LIMIT = Number(args.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? 0);
-
-const HTTP_HEADERS = {
-  "User-Agent": "HavenSnusImporter/1.0",
-  Accept: "application/json",
-};
 
 // Brand display names where the slug alone does not give the right casing.
 const BRAND_NAMES: Record<string, string> = {
@@ -85,8 +89,6 @@ interface MappedProduct {
 }
 
 // ─── Fetch ───────────────────────────────────────────────────────────────────
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchJson<T>(url: string, attempts = 3): Promise<{ data: T; totalPages: number }> {
   for (let i = 1; ; i++) {
@@ -130,10 +132,6 @@ async function fetchCatalogue(): Promise<SourceProduct[]> {
 
 // ─── Mapping helpers ─────────────────────────────────────────────────────────
 
-function decode(html: string): string {
-  return cheerio.load(`<div>${html}</div>`)("div").text().replace(/\s+/g, " ").trim();
-}
-
 /** "ZYN SLIM – COOL MINT 6MG" → "ZYN Slim – Cool Mint 6mg" (brand keeps its casing). */
 function tidyName(name: string, brand: MappedBrand | null): string {
   let s = name
@@ -144,45 +142,6 @@ function tidyName(name: string, brand: MappedBrand | null): string {
     s = brand.name + s.slice(brand.name.length);
   }
   return s;
-}
-
-function rebrand(text: string): string {
-  return text
-    .replace(/snus\s*down\s*under/gi, "Haven Snus")
-    .replace(/(?:https?:\/\/)?(?:www\.)?snusdownunder\.com/gi, "havensnus.com");
-}
-
-const ALLOWED_TAGS = new Set(["p", "h2", "h3", "h4", "ul", "ol", "li", "strong", "em", "br"]);
-
-/** Keep simple structural markup only; drop links, scripts, attributes. */
-function sanitizeDescription(html: string): string {
-  const $ = cheerio.load(`<div id="root">${html}</div>`);
-  const root = $("#root");
-  root.find("script, style, iframe, img, form").remove();
-  root.find("*").each((_, el) => {
-    if (el.type !== "tag") return;
-    const tag = el.tagName.toLowerCase();
-    if (tag === "b") el.tagName = "strong";
-    else if (tag === "i") el.tagName = "em";
-    else if (!ALLOWED_TAGS.has(tag)) {
-      $(el).replaceWith($(el).contents());
-      return;
-    }
-    el.attribs = {};
-  });
-  root.find("p").each((_, el) => {
-    if (!$(el).text().trim()) $(el).remove();
-  });
-  return rebrand(root.html() ?? "").trim();
-}
-
-function firstParagraph(html: string): string {
-  const $ = cheerio.load(html);
-  const text = $("p").first().text() || $.root().text();
-  const clean = rebrand(text.replace(/\s+/g, " ").trim());
-  if (clean.length <= 220) return clean;
-  const cut = clean.slice(0, 220);
-  return `${cut.slice(0, cut.lastIndexOf(" "))}…`;
 }
 
 function attr(p: SourceProduct, name: string): string | undefined {
@@ -214,23 +173,6 @@ function stockQuantity(text: string): number | null {
 function strengthMg(text?: string): number | null {
   const m = text?.match(/([\d.]+)/);
   return m ? Number(m[1]) : null;
-}
-
-function buildFeatures(spec: {
-  strength?: string;
-  level?: string;
-  flavour?: string;
-  family?: string;
-  format?: string;
-  perTin?: number | null;
-}): string[] {
-  const features: string[] = [];
-  if (spec.strength) features.push(`${spec.strength} nicotine per pouch${spec.level ? ` (${spec.level})` : ""}`);
-  if (spec.flavour) features.push(`${spec.flavour} flavour${spec.family ? `, ${spec.family.toLowerCase()} family` : ""}`);
-  if (spec.format) features.push(`${spec.format} pouch format`);
-  if (spec.perTin) features.push(`${spec.perTin} pouches per can`);
-  features.push("Tobacco-free, white nicotine pouches");
-  return features;
 }
 
 function mapProduct(p: SourceProduct): { product: MappedProduct; brand: MappedBrand | null } | null {
@@ -273,8 +215,8 @@ function mapProduct(p: SourceProduct): { product: MappedProduct; brand: MappedBr
         flavour_family: family ?? null,
         pouch_format: format ?? null,
         pouches_per_tin: perTin,
-        stock_quantity: stockQuantity(p.stock_availability?.text ?? ""),
-        in_stock: p.is_in_stock,
+        stock_quantity: REAL_STOCK ? stockQuantity(p.stock_availability?.text ?? "") : null,
+        in_stock: REAL_STOCK ? p.is_in_stock : true,
         is_active: true,
         seo_title: `${name} | Haven Snus`,
         seo_description: short.slice(0, 160),
@@ -288,7 +230,41 @@ function mapProduct(p: SourceProduct): { product: MappedProduct; brand: MappedBr
   };
 }
 
-/** Feature two in-stock products from each of the biggest brands. */
+type Badge = "Brand New" | "Popular";
+
+/**
+ * The Store API does not expose the shop's "Brand New" / "Popular" labels, so
+ * read them from the paginated listing HTML (`post-<id>` + `product-badge`).
+ */
+async function fetchBadges(): Promise<Record<string, Badge>> {
+  if (FROM_CACHE && fs.existsSync(BADGE_CACHE_FILE)) {
+    return JSON.parse(fs.readFileSync(BADGE_CACHE_FILE, "utf8"));
+  }
+  const badges: Record<string, Badge> = {};
+  for (let page = 1; page <= 100; page++) {
+    const res = await fetch(page === 1 ? LISTING_URL : `${LISTING_URL}page/${page}/`, {
+      headers: { ...HTTP_HEADERS, Accept: "text/html" },
+    });
+    if (!res.ok) break;
+    const html = await res.text();
+    const items = [
+      ...html.matchAll(
+        /<li class="product type-product post-(\d+)[^"]*"[^>]*>\s*<a[^>]*>(?:<span class="product-badge">([^<]+)<\/span>)?/g
+      ),
+    ];
+    if (items.length === 0) break;
+    for (const [, id, label] of items) {
+      const badge = label?.trim();
+      if (badge === "Brand New" || badge === "Popular") badges[id] = badge;
+    }
+    await sleep(400);
+  }
+  fs.mkdirSync(path.dirname(BADGE_CACHE_FILE), { recursive: true });
+  fs.writeFileSync(BADGE_CACHE_FILE, JSON.stringify(badges));
+  return badges;
+}
+
+/** Fallback when no badges are found: two in-stock products from each of the biggest brands. */
 function pickFeatured(products: MappedProduct[]) {
   const byBrand = new Map<string, MappedProduct[]>();
   for (const p of products) {
@@ -298,72 +274,6 @@ function pickFeatured(products: MappedProduct[]) {
   }
   const top = [...byBrand.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 6);
   for (const [, list] of top) for (const p of list.slice(0, 2)) p.row.is_featured = true;
-}
-
-// ─── R2 ──────────────────────────────────────────────────────────────────────
-
-function r2Client() {
-  const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env;
-  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-    throw new Error("R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY must be set");
-  }
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
-  });
-}
-
-/** Packshots are shown at most ~600px wide; 1000px covers 2x displays. */
-const IMAGE_MAX_PX = 1000;
-
-async function objectExists(s3: S3Client, bucket: string, key: string) {
-  try {
-    await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Copy one source image into R2 as a web-sized WebP and return its public URL. */
-async function mirrorImage(s3: S3Client, src: string, slug: string, index: number): Promise<string> {
-  const bucket = process.env.R2_BUCKET!;
-  const publicUrl = process.env.R2_PUBLIC_URL!.replace(/\/$/, "");
-  const key = `products/${slug}${index ? `-${index + 1}` : ""}.webp`;
-
-  if (!(await objectExists(s3, bucket, key))) {
-    const res = await fetch(src, { headers: { ...HTTP_HEADERS, Accept: "image/*" } });
-    if (!res.ok) throw new Error(`image HTTP ${res.status}: ${src}`);
-    const body = await sharp(Buffer.from(await res.arrayBuffer()))
-      .resize({ width: IMAGE_MAX_PX, height: IMAGE_MAX_PX, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toBuffer();
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: body,
-        ContentType: "image/webp",
-        CacheControl: "public, max-age=31536000, immutable",
-      })
-    );
-  }
-  return `${publicUrl}/${key}`;
-}
-
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>) {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, async () => {
-      while (next < items.length) {
-        const i = next++;
-        results[i] = await fn(items[i], i);
-      }
-    })
-  );
-  return results;
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -385,7 +295,19 @@ async function main() {
     if (mapped.brand) brands.set(mapped.brand.slug, mapped.brand);
     products.push(mapped.product);
   }
-  pickFeatured(products);
+  console.log("Reading Brand New / Popular labels…");
+  const badges = await fetchBadges().catch((err) => {
+    console.warn(`  could not read labels: ${(err as Error).message}`);
+    return {} as Record<string, Badge>;
+  });
+  for (const p of products) {
+    const badge = badges[String(p.row.source_id)];
+    p.row.is_new = badge === "Brand New";
+    p.row.is_featured = badge === "Popular";
+  }
+  const labelled = Object.keys(badges).length;
+  console.log(`  ${labelled} labelled products`);
+  if (!products.some((p) => p.row.is_featured)) pickFeatured(products);
 
   const inStock = products.filter((p) => p.row.in_stock).length;
   console.log(

@@ -24,7 +24,6 @@ export type OrderEmailData = {
   email: string;
   phone: string;
   address: string;
-  country: "AU" | "NZ";
   items: { name: string; sku: string; qty: number; price: number }[];
   subtotal: number;
   shipping: number;
@@ -65,7 +64,6 @@ export function orderCustomerEmail(data: OrderEmailData) {
     <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(data.firstName)},</p>
     <p style="margin:0 0 12px;font-size:14px;">Thanks for your order <strong>${escapeHtml(data.reference)}</strong>. We will email your payment details shortly. Your order ships with tracking as soon as payment is received.</p>
     ${itemsTable(data)}
-    ${data.country === "NZ" && data.displayTotal ? `<p style="margin:4px 0 0;font-size:13px;color:#4a5560;">About ${escapeHtml(data.displayTotal)} at today's rate. You are charged in AUD.</p>` : ""}
     <p style="margin:16px 0 0;font-size:14px;"><strong>Ship to:</strong> ${escapeHtml(data.address)}</p>
     <p style="margin:16px 0 0;font-size:13px;color:#4a5560;">Questions? Just reply to this email.</p>
   `;

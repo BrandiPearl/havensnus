@@ -1,5 +1,3 @@
-import type { ShippingCountry } from "@/lib/shipping";
-
 export type OrderInput = {
   first_name: string;
   last_name: string;
@@ -10,11 +8,11 @@ export type OrderInput = {
   suburb: string;
   state: string;
   postcode: string;
-  country: ShippingCountry;
+  country: "AU";
   notes?: string;
   age_confirmed: boolean;
   prescription_confirmed: boolean;
-  /** What the customer saw, e.g. "NZ$54.20"; informational only. */
+  /** The total the customer saw at checkout; informational only. */
   display_total?: string;
   items: { id: string; qty: number }[];
 };
@@ -31,7 +29,7 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const MAX_QTY_PER_LINE = 99;
+export const MAX_QTY_PER_LINE = 1000;
 
 export function createOrderReference() {
   const stamp = Date.now().toString(36).toUpperCase().slice(-6);

@@ -14,8 +14,8 @@ const REASONS = [
     body: "We turn stock over quickly, so cans arrive moist and full-flavoured rather than dried out at the back of a shelf.",
   },
   {
-    title: "Tracked AU & NZ delivery",
-    body: "Every order ships with tracking to Australia and New Zealand, and shipping is free once your order passes the threshold.",
+    title: "Tracked delivery Australia-wide",
+    body: "Every order ships with tracking to anywhere in Australia, and shipping is free once your order passes the threshold.",
   },
   {
     title: "Honest strength grading",

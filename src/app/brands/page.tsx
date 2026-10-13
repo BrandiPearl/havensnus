@@ -7,7 +7,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Nicotine Pouch Brands",
   description:
-    "Every nicotine pouch brand we stock, from ZYN and VELO to PABLO, KILLA, CUBA and XQS. Delivered across Australia and New Zealand.",
+    "Every nicotine pouch brand we stock, from ZYN and VELO to PABLO, KILLA, CUBA and XQS. Delivered Australia-wide.",
   alternates: { canonical: "/brands" },
 };
 

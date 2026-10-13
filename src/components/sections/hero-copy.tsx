@@ -13,7 +13,7 @@ const fade = {
   }),
 };
 
-const EYEBROW = "Nicotine pouches · Australia & New Zealand";
+const EYEBROW = "Nicotine pouches · Delivered Australia-wide";
 const BODY =
   "ZYN, VELO, PABLO, KILLA and 30+ more brands. Every strength from light to extreme, every flavour from cool mint to cola, shipped with tracking to your door.";
 

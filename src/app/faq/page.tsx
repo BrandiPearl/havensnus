@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-function faqSections(freeFrom: number, au: number, nz: number) {
+function faqSections(freeFrom: number, rate: number) {
   const free = freeFrom > 0 ? ` Orders over ${formatAud(freeFrom)} ship free.` : "";
   return [
     {
@@ -64,19 +64,19 @@ function faqSections(freeFrom: number, au: number, nz: number) {
       faqs: [
         {
           q: "Where do you ship?",
-          a: `Australia and New Zealand. Every order is sent with tracking. Shipping is a flat ${formatAud(au)} to Australia and ${formatAud(nz)} to New Zealand.${free}`,
+          a: `Anywhere in Australia, and only within Australia. Every order is sent with tracking, and shipping is a flat ${formatAud(rate)}.${free}`,
         },
         {
           q: "How do I pay?",
           a: "Place your order at checkout and we will email you payment details. Your order is packed and shipped as soon as payment is received.",
         },
         {
-          q: "Do I need a prescription to order to Australia?",
-          a: "Under Australian rules, importing nicotine products for personal use requires a valid prescription from an Australian doctor. You will be asked to confirm you hold one at checkout. Orders to New Zealand do not need one.",
+          q: "Do I need a prescription?",
+          a: "Under Australian rules, importing nicotine products for personal use requires a valid prescription from an Australian doctor. You will be asked to confirm you hold one at checkout.",
         },
         {
-          q: "Why are prices in AUD?",
-          a: "All prices are set and charged in Australian dollars. New Zealand visitors see an NZD estimate based on today's exchange rate.",
+          q: "What currency are prices in?",
+          a: "All prices are in Australian dollars, per can.",
         },
         {
           q: "Is the packaging discreet?",
@@ -89,7 +89,7 @@ function faqSections(freeFrom: number, au: number, nz: number) {
 
 export default async function FAQPage() {
   const settings = await getSiteSettings();
-  const sections = faqSections(settings.free_shipping_threshold, settings.shipping_au, settings.shipping_nz);
+  const sections = faqSections(settings.free_shipping_threshold, settings.shipping_au);
 
   return (
     <div className="min-h-screen bg-white">

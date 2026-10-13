@@ -14,7 +14,8 @@
     "import": "tsx scripts/import-products.ts",
     "import:dry": "tsx scripts/import-products.ts --dry-run",
     "import:cache": "tsx scripts/import-products.ts --from-cache",
-    "seed:blog": "tsx scripts/seed-blog.ts"
+    "seed:blog": "tsx scripts/seed-blog.ts",
+    "import:snussie": "tsx scripts/import-snussie.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",

@@ -9,9 +9,11 @@ interface ProductGalleryProps {
   images: ProductImage[];
   name: string;
   isNew?: boolean;
+  isPopular?: boolean;
+  onSale?: boolean;
 }
 
-export function ProductGallery({ images, name, isNew = false }: ProductGalleryProps) {
+export function ProductGallery({ images, name, isNew = false, isPopular = false, onSale = false }: ProductGalleryProps) {
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0];
   const thumbs = images.slice(0, 8);
@@ -29,10 +31,9 @@ export function ProductGallery({ images, name, isNew = false }: ProductGalleryPr
           name={name}
           priority
         />
-        {isNew && (
-          <div className="absolute top-4 left-4">
-            <span className="badge-orange">New</span>
-          </div>
+        {onSale && <span className="badge-sale absolute left-4 top-4">Sale!</span>}
+        {(isNew || isPopular) && (
+          <span className="badge-label absolute right-4 top-4">{isNew ? "Brand New" : "Popular"}</span>
         )}
       </div>
 

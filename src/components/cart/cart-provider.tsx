@@ -15,6 +15,9 @@ import {
   cartSubtotal,
   type CartItem,
 } from "@/lib/cart";
+import { MAX_QTY_PER_LINE } from "@/lib/orders";
+
+const clampQty = (n: number) => Math.min(MAX_QTY_PER_LINE, Math.max(0, Math.floor(n)));
 
 type CartContextValue = {
   items: CartItem[];
@@ -62,17 +65,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = current.find((row) => row.id === item.id);
       if (existing) {
         return current.map((row) =>
-          row.id === item.id ? { ...row, qty: row.qty + addQty, ...item } : row
+          row.id === item.id ? { ...row, ...item, qty: clampQty(row.qty + addQty) } : row
         );
       }
-      return [...current, { ...item, qty: addQty }];
+      return [...current, { ...item, qty: clampQty(addQty) }];
     });
   }, []);
 
   const setQty = useCallback((id: string, qty: number) => {
     setItems((current) => {
-      if (qty <= 0) return current.filter((row) => row.id !== id);
-      return current.map((row) => (row.id === id ? { ...row, qty } : row));
+      const next = clampQty(qty);
+      if (next <= 0) return current.filter((row) => row.id !== id);
+      return current.map((row) => (row.id === id ? { ...row, qty: next } : row));
     });
   }, []);
 

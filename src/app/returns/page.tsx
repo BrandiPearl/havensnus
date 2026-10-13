@@ -42,8 +42,7 @@ export default function ReturnsPage() {
 
       <InfoSection title="Your rights">
         <p>
-          Nothing in this policy limits your rights under the Australian Consumer Law or the New Zealand
-          Consumer Guarantees Act.
+          Nothing in this policy limits your rights under the Australian Consumer Law.
         </p>
       </InfoSection>
 

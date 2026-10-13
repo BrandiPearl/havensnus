@@ -319,7 +319,6 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
 
   const rates: [string, number | null][] = [
     ["shipping_au", num(formData, "shipping_au")],
-    ["shipping_nz", num(formData, "shipping_nz")],
     ["free_shipping_threshold", num(formData, "free_shipping_threshold")],
   ];
   for (const [key, value] of rates) {

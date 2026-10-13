@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 import { CartButton } from "@/components/cart/cart-button";
 import { SearchDialog } from "@/components/layout/search-dialog";
-import { CurrencySelect } from "@/components/currency/currency-select";
 import { useCurrency } from "@/components/currency/currency-provider";
 import { useSettings } from "@/components/layout/settings-provider";
 import { localizeAmountsInText } from "@/lib/currency";
@@ -224,7 +223,6 @@ export function Nav({ brands }: { brands: NavBrand[] }) {
             </nav>
 
             <div className="flex items-center gap-1.5">
-              <CurrencySelect />
 
               <button
                 type="button"

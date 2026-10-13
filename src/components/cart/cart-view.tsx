@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useCurrency } from "@/components/currency/currency-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
-import { MAX_QTY_PER_LINE } from "@/lib/orders";
+import { QtyInput } from "@/components/cart/qty-input";
 
 export function CartView() {
   const { items, ready, setQty, removeItem, subtotal } = useCart();
-  const { format, country } = useCurrency();
+  const { format } = useCurrency();
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Loading cart…</p>;
@@ -44,25 +44,12 @@ export function CartView() {
               </Link>
               <div className="mt-0.5 text-xs text-slate-500">{format(item.price)} per can</div>
               <div className="mt-3 flex items-center justify-between gap-3">
-                <div className="inline-flex items-center rounded-lg border border-slate-200">
-                  <button
-                    type="button"
-                    className="p-2 text-slate-600"
-                    aria-label="Decrease quantity"
-                    onClick={() => setQty(item.id, item.qty - 1)}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-semibold tabular">{item.qty}</span>
-                  <button
-                    type="button"
-                    className="p-2 text-slate-600"
-                    aria-label="Increase quantity"
-                    onClick={() => setQty(item.id, Math.min(MAX_QTY_PER_LINE, item.qty + 1))}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                <QtyInput
+                  size="sm"
+                  value={item.qty}
+                  onChange={(n) => setQty(item.id, n)}
+                  label={`Quantity of ${item.name}`}
+                />
                 <div className="font-bold text-slate-900">{format(item.price * item.qty)}</div>
               </div>
             </div>
@@ -80,7 +67,7 @@ export function CartView() {
 
       <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-bold text-slate-900">Order summary</h2>
-        <OrderSummaryLines subtotal={subtotal} country={country === "NZ" ? "NZ" : "AU"} />
+        <OrderSummaryLines subtotal={subtotal} />
         <Link href="/checkout" className="btn-primary mt-5 w-full justify-center py-3 text-sm">
           Continue to checkout
         </Link>

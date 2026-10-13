@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Shipping",
-  description: "Tracked delivery of nicotine pouches across Australia and New Zealand. Rates, timing and what to expect.",
+  description: "Tracked delivery of nicotine pouches anywhere in Australia. Rates, timing and what to expect.",
   alternates: { canonical: "/shipping" },
 };
 
@@ -19,26 +19,21 @@ export default async function ShippingPage() {
     <InfoPage
       eyebrow="Help"
       title="Shipping"
-      intro="We ship to Australia and New Zealand, with tracking on every order."
+      intro="We ship anywhere in Australia, with tracking on every order. We do not ship outside Australia."
     >
       <InfoSection title="Rates">
         <table>
           <thead>
             <tr>
-              <th>Destination</th>
+              <th>Delivery</th>
               <th>Flat rate</th>
               <th>Free from</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Australia</td>
+              <td>Anywhere in Australia</td>
               <td>{formatAud(settings.shipping_au)}</td>
-              <td>{free > 0 ? formatAud(free) : "–"}</td>
-            </tr>
-            <tr>
-              <td>New Zealand</td>
-              <td>{formatAud(settings.shipping_nz)}</td>
               <td>{free > 0 ? formatAud(free) : "–"}</td>
             </tr>
           </tbody>
@@ -53,7 +48,7 @@ export default async function ShippingPage() {
         </p>
       </InfoSection>
 
-      <InfoSection title="Australian orders">
+      <InfoSection title="Prescription requirement">
         <p>
           Under Australian rules, nicotine products imported for personal use require a valid prescription
           from an Australian doctor. You will be asked to confirm you hold one at checkout. Orders that

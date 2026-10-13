@@ -43,9 +43,9 @@ export async function submitOrder(
     postcode: clean(input.postcode, 10),
     notes: clean(input.notes, 2000) || null,
   };
-  const country = input.country === "NZ" ? "NZ" : input.country === "AU" ? "AU" : null;
+  const country = input.country === "AU" ? "AU" : null;
 
-  if (!country) return { success: false, error: "We currently ship to Australia and New Zealand only." };
+  if (!country) return { success: false, error: "We currently ship within Australia only." };
   if (!customer.first_name || !customer.last_name) return { success: false, error: "Enter your full name." };
   if (!EMAIL_RE.test(customer.email)) return { success: false, error: "Enter a valid email address." };
   if (!customer.phone) return { success: false, error: "Enter a phone number for the courier." };
@@ -53,10 +53,11 @@ export async function submitOrder(
     return { success: false, error: "Enter your full delivery address." };
   }
   if (!/^\d{4}$/.test(customer.postcode)) {
-    return { success: false, error: "Postcodes are 4 digits in Australia and New Zealand." };
+    return { success: false, error: "Enter a 4-digit Australian postcode." };
   }
   if (!input.age_confirmed) return { success: false, error: "Please confirm you are 18 or older." };
-  if (country === "AU" && !input.prescription_confirmed) {
+  if (!customer.state) return { success: false, error: "Select your state." };
+  if (!input.prescription_confirmed) {
     return { success: false, error: "Australian orders require confirmation that you hold a valid prescription." };
   }
 
@@ -85,14 +86,13 @@ export async function submitOrder(
 
   const settings = await getSiteSettings();
   const subtotal = round2(items.reduce((sum, i) => sum + i.price * i.qty, 0));
-  const shipping = round2(shippingFor(subtotal, country, settings));
+  const shipping = round2(shippingFor(subtotal, settings));
   const total = round2(subtotal + shipping);
   const reference = createOrderReference();
 
   const { error: insertError } = await admin.from("orders").insert({
     reference,
     ...customer,
-    state: customer.state || null,
     country,
     items: items.map(({ sku, name, qty, price }) => ({ sku, name, qty, price })),
     item_count: items.reduce((sum, i) => sum + i.qty, 0),
@@ -102,7 +102,7 @@ export async function submitOrder(
     currency: "AUD",
     display_total: clean(input.display_total, 40) || null,
     age_confirmed: true,
-    internal_notes: country === "AU" ? "Customer confirmed a valid prescription at checkout." : null,
+    internal_notes: "Customer confirmed a valid prescription at checkout.",
     status: "pending",
   });
   if (insertError) {
@@ -112,7 +112,7 @@ export async function submitOrder(
 
   // The order is saved; email is best-effort so a mail outage never loses an order.
   if (isMailConfigured()) {
-    const address = [customer.address_line1, customer.address_line2, customer.suburb, customer.state, customer.postcode, country === "AU" ? "Australia" : "New Zealand"]
+    const address = [customer.address_line1, customer.address_line2, customer.suburb, customer.state, customer.postcode, "Australia"]
       .filter(Boolean)
       .join(", ");
     const data = {
@@ -122,7 +122,6 @@ export async function submitOrder(
       email: customer.email,
       phone: customer.phone,
       address,
-      country,
       items,
       subtotal,
       shipping,

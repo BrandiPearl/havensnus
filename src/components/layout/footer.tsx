@@ -72,7 +72,7 @@ export function Footer() {
             <Logo variant="light" size="sm" />
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-400">
               Tobacco-free nicotine pouches from 30+ brands, shipped with
-              tracking to every corner of Australia and New Zealand.
+              tracking to every corner of Australia.
             </p>
 
             <div className="mt-7">
@@ -115,7 +115,7 @@ export function Footer() {
               who already use nicotine, and are not for sale to anyone under 18.
             </p>
             <p className="spec mt-4 text-[0.6875rem] uppercase tracking-[0.14em] text-orange-500">
-              Ships to AU · NZ
+              Ships Australia-wide
             </p>
           </div>
         </div>

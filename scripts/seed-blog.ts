@@ -90,11 +90,15 @@ function readTime(content: string) {
   return Math.max(2, Math.round(content.split(/\s+/).length / 200));
 }
 
+/** Posts that were renamed or retired; removed so old URLs 404 instead of showing stale copy. */
+const RETIRED_SLUGS = ["ordering-nicotine-pouches-australia-new-zealand"];
+
 async function main() {
+  await supabase.from("blog_posts").delete().in("slug", RETIRED_SLUGS);
   const { data: author, error: authorError } = await supabase
     .from("authors")
     .upsert(
-      { slug: "haven-snus-team", name: "Haven Snus Team", bio: "Pouch fans in Australia and New Zealand" },
+      { slug: "haven-snus-team", name: "Haven Snus Team", bio: "Pouch fans across Australia" },
       { onConflict: "slug" }
     )
     .select("id")

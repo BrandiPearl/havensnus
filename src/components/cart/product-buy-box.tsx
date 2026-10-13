@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Minus, Plus } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
+import { QtyInput } from "@/components/cart/qty-input";
 import { cn } from "@/lib/utils";
 
 type ProductInput = {
@@ -78,31 +79,13 @@ export function ProductBuyBox({ product }: { product: ProductInput }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="inline-flex items-center rounded-lg border border-slate-200">
-          <button
-            type="button"
-            className="p-3 text-slate-600 hover:text-slate-900"
-            aria-label="Decrease quantity"
-            onClick={() => {
-              setQty((n) => Math.max(1, n - 1));
-              setAdded(false);
-            }}
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="w-10 text-center text-sm font-semibold tabular" aria-live="polite">{qty}</span>
-          <button
-            type="button"
-            className="p-3 text-slate-600 hover:text-slate-900"
-            aria-label="Increase quantity"
-            onClick={() => {
-              setQty((n) => Math.min(99, n + 1));
-              setAdded(false);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
+        <QtyInput
+          value={qty}
+          onChange={(n) => {
+            setQty(n);
+            setAdded(false);
+          }}
+        />
         <button type="button" className="btn-primary flex-1 py-3.5 text-base" onClick={add}>
           {added ? (
             <span className="inline-flex items-center gap-2">

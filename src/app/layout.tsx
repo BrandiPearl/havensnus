@@ -34,14 +34,14 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Haven Snus | Nicotine Pouches Delivered Across Australia & New Zealand",
+    default: "Haven Snus | Nicotine Pouches Delivered Australia-Wide",
     template: "%s | Haven Snus",
   },
   description:
-    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Every strength and flavour, with tracked delivery across Australia and New Zealand.",
+    "Shop ZYN, VELO, PABLO, KILLA and 30+ nicotine pouch brands. Every strength and flavour, with tracked delivery Australia-wide.",
   keywords: [
     "nicotine pouches australia",
-    "nicotine pouches nz",
+    "nicotine pouches delivered australia",
     "buy zyn australia",
     "velo nicotine pouches",
     "snus australia",
@@ -56,14 +56,14 @@ export const metadata: Metadata = {
     locale: "en_AU",
     url: SITE_URL,
     siteName: "Haven Snus",
-    title: "Haven Snus | Nicotine Pouches for Australia & New Zealand",
-    description: "30+ brands of tobacco-free nicotine pouches with tracked AU & NZ delivery.",
+    title: "Haven Snus | Nicotine Pouches Delivered Australia-Wide",
+    description: "30+ brands of tobacco-free nicotine pouches with tracked delivery Australia-wide.",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Haven Snus" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Haven Snus",
-    description: "30+ brands of tobacco-free nicotine pouches with tracked AU & NZ delivery.",
+    description: "30+ brands of tobacco-free nicotine pouches with tracked delivery Australia-wide.",
     images: ["/og-image.png"],
   },
   robots: {

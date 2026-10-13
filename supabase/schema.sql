@@ -147,7 +147,7 @@ create table product_features (
 create index product_features_product_id_idx on product_features(product_id);
 
 -- ============================================================
--- ORDERS (checkout submissions — AU and NZ only)
+-- ORDERS (checkout submissions, Australia only)
 -- ============================================================
 
 create table orders (
@@ -160,16 +160,16 @@ create table orders (
   address_line1   text not null,
   address_line2   text,
   suburb          text not null,
-  state           text,             -- AU state / NZ region
+  state           text,             -- AU state
   postcode        text not null,
-  country         text not null check (country in ('AU', 'NZ')),
+  country         text not null check (country = 'AU'),
   items           jsonb not null,   -- [{ sku, name, qty, price }]
   item_count      int not null default 0,
   subtotal        numeric(10, 2) not null,   -- AUD
   shipping        numeric(10, 2) not null default 0,
   total           numeric(10, 2) not null,
   currency        text not null default 'AUD',
-  display_total   text,             -- what the customer saw, e.g. "NZ$54.20"
+  display_total   text,             -- what the customer saw at checkout
   notes           text,
   age_confirmed   boolean not null default false,
   status          order_status not null default 'pending',

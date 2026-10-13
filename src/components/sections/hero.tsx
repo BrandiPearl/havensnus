@@ -21,7 +21,7 @@ export async function Hero() {
   const stats: { label: string; value: React.ReactNode; unit?: string }[] = [
     { label: "Brands", value: brands.length || "30", unit: "+" },
     { label: "Products", value: productCount || "490", unit: "" },
-    { label: "Delivering to", value: "AU · NZ" },
+    { label: "Delivering", value: "Australia-wide" },
     {
       label: "Free shipping from",
       value:

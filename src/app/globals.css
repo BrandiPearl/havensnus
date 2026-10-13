@@ -444,6 +444,22 @@
     white-space: nowrap;
   }
 
+  /* Product card labels: Sale (sun) top-left, Brand New / Popular (ink) top-right. */
+  .badge-sale,
+  .badge-label {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    padding: 0.3125rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    z-index: 1;
+  }
+  .badge-sale { background-color: #e9ae3a; color: #131a20; }
+  .badge-label { background-color: #13806c; color: #ffffff; }
+
   .badge { background-color: #edf1f3; color: #36404a; }
   .badge-orange { background-color: #13806c; color: #ffffff; }
   .badge-green { background-color: #d8e8d8; color: #26492c; }

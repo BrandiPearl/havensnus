@@ -8,7 +8,7 @@ import type { Product } from "@/types";
 export const metadata: Metadata = {
   title: "Shop Nicotine Pouches | ZYN, VELO, PABLO & More",
   description:
-    "Shop 30+ nicotine pouch brands by strength, flavour and format. Tracked delivery across Australia and New Zealand.",
+    "Shop 30+ nicotine pouch brands by strength, flavour and format. Tracked delivery Australia-wide.",
   alternates: { canonical: "/products" },
 };
 

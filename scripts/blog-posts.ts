@@ -235,26 +235,26 @@ Cans carry a best-before or production date. We turn our stock over quickly, but
 Nicotine is toxic to children and animals, even in small amounts. Store cans out of reach, and use the lid compartment for used pouches rather than leaving them on a table or in a pocket.`,
   },
   {
-    slug: "ordering-nicotine-pouches-australia-new-zealand",
-    title: "Ordering Nicotine Pouches in Australia and New Zealand",
+    slug: "ordering-nicotine-pouches-australia",
+    title: "Ordering Nicotine Pouches in Australia",
     excerpt:
-      "How ordering works at Haven Snus, from checkout and payment to tracked delivery, plus what Australian customers need to know.",
+      "How ordering works at Haven Snus, from checkout and payment to tracked delivery anywhere in Australia.",
     category: "News",
-    tags: ["ordering", "shipping", "australia", "new zealand"],
+    tags: ["ordering", "shipping", "australia"],
     coverBrands: ["loop", "lumi", "clew"],
     coverTint: "#e5f1f4",
     daysAgo: 2,
-    content: `We ship nicotine pouches to Australia and New Zealand. Here is how an order works from start to finish.
+    content: `We ship nicotine pouches anywhere in Australia. Here is how an order works from start to finish.
 
 ## 1. Build your cart
 
-Browse by brand, strength or flavour. Prices are per can and shown in Australian dollars. If you are in New Zealand, you can switch to NZD in the header to see an estimate at today's exchange rate. Orders are always charged in AUD.
+Browse by brand, strength or flavour. Prices are per can and in Australian dollars. You can type any quantity into the cart, up to 1000 cans of a single product.
 
 ## 2. Check out
 
-At checkout you will enter your contact details and delivery address, and confirm that you are 18 or older.
+At checkout you will enter your contact details and your Australian delivery address, and confirm that you are 18 or older.
 
-**Australian customers:** under Australian rules, importing nicotine products for personal use requires a valid prescription from an Australian doctor. You will be asked to confirm that you hold one before placing your order.
+Under Australian rules, importing nicotine products for personal use requires a valid prescription from an Australian doctor. You will be asked to confirm that you hold one before placing your order.
 
 ## 3. Pay
 
@@ -262,9 +262,11 @@ We do not take card details on the website. After you place an order, we email y
 
 ## 4. Tracked delivery
 
-Every order ships with tracking, and we email you the tracking number when it leaves. Shipping is a flat rate per country, and it is free once your order passes the free shipping threshold shown at the top of the site.
+Every order ships with tracking, and we email you the tracking number when it leaves. Shipping is a flat rate, and it is free once your order passes the free shipping threshold shown at the top of the site.
 
 Parcels go out in plain packaging with no product branding on the outside.
+
+We only deliver within Australia.
 
 ## Questions?
 

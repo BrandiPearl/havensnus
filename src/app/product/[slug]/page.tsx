@@ -99,7 +99,13 @@ export default async function ProductPage({ params }: Props) {
 
       <div className="container-wide py-10 lg:py-14">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 xl:gap-16">
-          <ProductGallery images={product.images} name={product.name} isNew={product.is_new} />
+          <ProductGallery
+            images={product.images}
+            name={product.name}
+            isNew={product.is_new}
+            isPopular={product.is_featured}
+            onSale={hasDiscount}
+          />
 
           <div>
             <div className="spec text-[0.6875rem] uppercase tracking-[0.16em] text-orange-700">
@@ -179,9 +185,9 @@ export default async function ProductPage({ params }: Props) {
                   term: "Delivery",
                   detail:
                     settings.free_shipping_threshold > 0 ? (
-                      <>Tracked to AU & NZ. Free over <Price amount={settings.free_shipping_threshold} /></>
+                      <>Tracked, Australia-wide. Free over <Price amount={settings.free_shipping_threshold} /></>
                     ) : (
-                      "Tracked to AU & NZ"
+                      "Tracked, Australia-wide"
                     ),
                 },
                 { icon: PackageCheck, term: "Packaging", detail: "Plain, discreet outer box" },
