@@ -40,6 +40,9 @@ export default async function ShippingPage() {
           </tbody>
         </table>
         <p>Flat rates in Australian dollars, per order. You choose the option at checkout.</p>
+        {settings.min_order > 0 && (
+          <p>The minimum order is {formatAud(settings.min_order)} before shipping.</p>
+        )}
       </InfoSection>
 
       <InfoSection title="When your order ships">

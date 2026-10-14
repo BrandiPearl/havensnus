@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-function faqSections(standard: number, express: number) {
+function faqSections(standard: number, express: number, minOrder: number) {
   return [
     {
       section: "About nicotine pouches",
@@ -65,6 +65,14 @@ function faqSections(standard: number, express: number) {
           q: "Where do you ship?",
           a: `Anywhere in Australia, and only within Australia. Every order is sent with tracking. Choose Standard shipping (${formatAud(standard)}) or Express shipping (${formatAud(express)}) at checkout.`,
         },
+        ...(minOrder > 0
+          ? [
+              {
+                q: "Is there a minimum order?",
+                a: `Yes. The minimum order is ${formatAud(minOrder)} before shipping. Mixing brands and flavours is fine.`,
+              },
+            ]
+          : []),
         {
           q: "How do I pay?",
           a: "Place your order at checkout and we will email you payment details. Your order is packed and shipped as soon as payment is received.",
@@ -88,7 +96,7 @@ function faqSections(standard: number, express: number) {
 
 export default async function FAQPage() {
   const settings = await getSiteSettings();
-  const sections = faqSections(settings.shipping_standard, settings.shipping_express);
+  const sections = faqSections(settings.shipping_standard, settings.shipping_express, settings.min_order);
 
   return (
     <div className="min-h-screen bg-white">

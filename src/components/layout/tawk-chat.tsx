@@ -2,8 +2,9 @@
 
 import Script from "next/script";
 
-// Set NEXT_PUBLIC_TAWK_SRC to the embed URL of the Haven Snus Tawk.to property to turn chat on.
-const TAWK_SRC = process.env.NEXT_PUBLIC_TAWK_SRC;
+// Same Tawk.to widget as the Wonderland site for now. Set NEXT_PUBLIC_TAWK_SRC
+// (Cloudflare build variable) to a Haven Snus property's embed URL to switch.
+const TAWK_SRC = process.env.NEXT_PUBLIC_TAWK_SRC || "https://embed.tawk.to/6a85c6b2ae3056344ea6ff6d/1k0d90b14";
 
 export function TawkChat() {
   if (!TAWK_SRC) return null;

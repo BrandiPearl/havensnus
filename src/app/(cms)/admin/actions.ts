@@ -311,6 +311,7 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
   const rates: [string, number | null][] = [
     ["shipping_standard", num(formData, "shipping_standard")],
     ["shipping_express", num(formData, "shipping_express")],
+    ["min_order", num(formData, "min_order")],
   ];
   for (const [key, value] of rates) {
     if (value == null || value < 0) return fail("Shipping amounts must be 0 or more.");

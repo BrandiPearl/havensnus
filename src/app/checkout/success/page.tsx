@@ -21,7 +21,7 @@ export default function CheckoutSuccessPage() {
           <CheckoutSuccess />
         </Suspense>
         <p className="mt-3 text-slate-500 text-sm">
-          We have emailed you a confirmation. Payment details follow shortly, and your order ships with tracking as soon as payment is received.
+          Your order is saved and our team has been notified. We will reply with payment details, and your order ships with tracking as soon as payment is received.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/products" className="btn-primary text-sm py-2.5 px-5">

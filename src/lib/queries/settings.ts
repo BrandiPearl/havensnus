@@ -81,5 +81,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     announcement_link_url: text("announcement_link_url"),
     shipping_standard: number("shipping_standard"),
     shipping_express: number("shipping_express"),
+    min_order: number("min_order"),
   };
 }

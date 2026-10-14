@@ -86,7 +86,11 @@ export function orderStaffEmail(data: OrderEmailData) {
     ])}
     ${itemsTable(data)}
     ${data.notes ? rows([`Notes: ${data.notes}`]) : ""}
-    <p style="margin:16px 0 0;font-size:14px;"><a href="${absoluteUrl("/admin/orders")}" style="color:#13806c;">Open orders in the CMS</a></p>
+    <p style="margin:18px 0 0;font-size:14px;">
+      <a href="mailto:${escapeHtml(data.email)}?subject=${encodeURIComponent(`Your Haven Snus order ${data.reference}`)}" style="display:inline-block;background:#13806c;color:#ffffff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:6px;margin:0 8px 8px 0;">Reply to customer</a>
+      <a href="tel:${escapeHtml(data.phone.replace(/[^\d+]/g, ""))}" style="display:inline-block;border:1px solid #13806c;color:#13806c;text-decoration:none;font-weight:700;padding:9px 16px;border-radius:6px;margin:0 8px 8px 0;">Call ${escapeHtml(data.phone)}</a>
+    </p>
+    <p style="margin:8px 0 0;font-size:13px;"><a href="${absoluteUrl("/admin/orders")}" style="color:#13806c;">Open orders in the CMS</a></p>
   `;
   return {
     subject: `New order ${data.reference} · ${formatAud(data.total)} · ${data.name}`,

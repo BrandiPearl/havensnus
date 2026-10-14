@@ -10,7 +10,7 @@ import {
 } from "@/lib/email/templates";
 import { BUSINESS_EMAIL } from "@/lib/contact-info";
 import { getSiteSettings } from "@/lib/queries/settings";
-import { isShippingMethod, shippingFor, shippingLabel } from "@/lib/shipping";
+import { isShippingMethod, minOrderShortfall, shippingFor, shippingLabel } from "@/lib/shipping";
 import { MAX_QTY_PER_LINE, createOrderReference, type OrderInput } from "@/lib/orders";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -88,6 +88,12 @@ export async function submitOrder(
 
   const settings = await getSiteSettings();
   const subtotal = round2(items.reduce((sum, i) => sum + i.price * i.qty, 0));
+  if (minOrderShortfall(subtotal, settings) > 0) {
+    return {
+      success: false,
+      error: `The minimum order is $${settings.min_order.toFixed(2)} before shipping. Add $${minOrderShortfall(subtotal, settings).toFixed(2)} more to check out.`,
+    };
+  }
   const shipping = round2(shippingFor(method, settings));
   const total = round2(subtotal + shipping);
   const reference = createOrderReference();

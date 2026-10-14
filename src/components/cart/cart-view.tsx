@@ -5,11 +5,13 @@ import { Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useCurrency } from "@/components/currency/currency-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
+import { MinOrderNotice, useMinOrder } from "@/components/cart/min-order-notice";
 import { QtyInput } from "@/components/cart/qty-input";
 
 export function CartView() {
   const { items, ready, setQty, removeItem, subtotal } = useCart();
   const { format } = useCurrency();
+  const { met: minOrderMet } = useMinOrder(subtotal);
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Loading cart…</p>;
@@ -68,9 +70,18 @@ export function CartView() {
       <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-bold text-slate-900">Order summary</h2>
         <OrderSummaryLines subtotal={subtotal} />
-        <Link href="/checkout" className="btn-primary mt-5 w-full justify-center py-3 text-sm">
-          Continue to checkout
-        </Link>
+        <div className="mt-4 empty:hidden">
+          <MinOrderNotice subtotal={subtotal} />
+        </div>
+        {minOrderMet ? (
+          <Link href="/checkout" className="btn-primary mt-5 w-full justify-center py-3 text-sm">
+            Continue to checkout
+          </Link>
+        ) : (
+          <button type="button" className="btn-primary mt-5 w-full justify-center py-3 text-sm" disabled>
+            Continue to checkout
+          </button>
+        )}
         <Link href="/products" className="mt-3 block text-center text-xs font-semibold text-slate-500 hover:text-orange-700">
           Continue shopping
         </Link>

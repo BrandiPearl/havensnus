@@ -8,8 +8,10 @@ import { useCart } from "@/components/cart/cart-provider";
 import { useCurrency } from "@/components/currency/currency-provider";
 import { useSettings } from "@/components/layout/settings-provider";
 import { OrderSummaryLines } from "@/components/cart/order-summary";
+import { MinOrderNotice, useMinOrder } from "@/components/cart/min-order-notice";
 import { submitOrder } from "@/app/storefront-actions";
-import { AU_STATES, SHIPPING_METHODS, shippingFor, type ShippingMethod } from "@/lib/shipping";
+import { LAST_ORDER_KEY, type LastOrder } from "@/lib/last-order";
+import { AU_STATES, SHIPPING_METHODS, shippingFor, shippingLabel, type ShippingMethod } from "@/lib/shipping";
 import { cn } from "@/lib/utils";
 import { AuFlag } from "@/components/ui/au-flag";
 
@@ -48,6 +50,7 @@ export function CheckoutForm() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [prescriptionConfirmed, setPrescriptionConfirmed] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("standard");
+  const { met: minOrderMet } = useMinOrder(subtotal);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,7 +60,7 @@ export function CheckoutForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!items.length) return;
+    if (!items.length || !minOrderMet) return;
     setError("");
     setLoading(true);
     const total = subtotal + shippingFor(shippingMethod, settings);
@@ -75,6 +78,21 @@ export function CheckoutForm() {
       setError(result.error ?? "Could not place this order. Please try again.");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
+    }
+    const shipping = shippingFor(shippingMethod, settings);
+    const summary: LastOrder = {
+      reference: result.reference,
+      name: `${form.first_name} ${form.last_name}`.trim(),
+      items: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+      subtotal,
+      shippingLabel: shippingLabel(shippingMethod),
+      shipping,
+      total: subtotal + shipping,
+    };
+    try {
+      window.sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(summary));
+    } catch {
+      // The success page falls back to the reference alone.
     }
     clear();
     router.push(`/checkout/success?ref=${encodeURIComponent(result.reference)}`);
@@ -97,6 +115,7 @@ export function CheckoutForm() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
       <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6">
+        <MinOrderNotice subtotal={subtotal} />
         {error ? (
           <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
@@ -210,7 +229,7 @@ export function CheckoutForm() {
           </Check>
         </div>
 
-        <button type="submit" className="btn-primary w-full justify-center py-3.5" disabled={loading}>
+        <button type="submit" className="btn-primary w-full justify-center py-3.5" disabled={loading || !minOrderMet}>
           {loading ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />

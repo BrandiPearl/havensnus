@@ -38,7 +38,10 @@ lists, and `**bold**`. Re-running updates posts by slug.
 - Checkout records an order in `orders` (no online payment). Prices and shipping are recalculated
   on the server. Staff mark orders paid and shipped in `/admin/orders`, which emails the customer.
 - Checkout offers Standard and Express shipping (flat rates, edited in `/admin/settings`). There is
-  no free-shipping threshold.
+  no free-shipping threshold. A minimum order (default $209.85 before shipping, also in settings) is
+  enforced in the cart, at checkout and on the server.
+- Placing an order saves it, emails the admin (with reply and call links) and the customer, and the
+  confirmation page opens the customer's email app with the order pre-filled so they email us.
 - Visitors confirm they are 18+ on first visit (`hs_age_ok` cookie). Checkout also requires
   confirming a valid prescription.
 
