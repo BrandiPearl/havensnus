@@ -1,4 +1,4 @@
-export const BUSINESS_EMAIL = "wonderlandinflatables10@gmail.com";
+export const BUSINESS_EMAIL = "sales@havensnus.com";
 export const BUSINESS_PHONE_DISPLAY = "0468 292 610";
 
 export function mailHref(email: string) {
