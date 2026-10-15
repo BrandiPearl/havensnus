@@ -11,8 +11,47 @@ export function staffInbox() {
   return process.env.MAIL_TO || process.env.SMTP_USER || BUSINESS_EMAIL;
 }
 
+/**
+ * Resend (HTTPS API) is preferred when RESEND_API_KEY is set: Cloudflare
+ * Workers cannot open sockets to Cloudflare-proxied hosts such as
+ * smtp.hostinger.com, so SMTP only works for providers outside Cloudflare.
+ */
+function resendKey() {
+  return process.env.RESEND_API_KEY || "";
+}
+
 export function isMailConfigured() {
-  return Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+  return Boolean(resendKey() || (process.env.SMTP_USER && process.env.SMTP_PASS));
+}
+
+async function sendViaResend(options: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  replyTo?: string;
+}) {
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: fromAddress(),
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+        ...(options.replyTo ? { reply_to: options.replyTo } : {}),
+      }),
+    });
+    if (res.ok) return { sent: true as const };
+    const detail = await res.text().catch(() => "");
+    console.error("sendMail (Resend):", res.status, detail);
+    return { sent: false as const, error: `Resend ${res.status}: ${detail.slice(0, 300)}` };
+  } catch (error) {
+    console.error("sendMail (Resend):", error);
+    return { sent: false as const, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 function transporter() {
@@ -33,7 +72,8 @@ export async function sendMail(options: {
   html: string;
   text: string;
   replyTo?: string;
-}) {
+}): Promise<{ sent: boolean; error?: string }> {
+  if (resendKey()) return sendViaResend(options);
   const transport = transporter();
   if (!transport) {
     console.warn("Email skipped: SMTP_USER / SMTP_PASS are not set.");
@@ -60,6 +100,7 @@ export async function sendMail(options: {
 export function mailConfigSummary() {
   const pass = process.env.SMTP_PASS || "";
   return {
+    provider: resendKey() ? "Resend API" : "SMTP",
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: Number(process.env.SMTP_PORT || 465),
     user: process.env.SMTP_USER || "(not set)",

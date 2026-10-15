@@ -392,7 +392,10 @@ export async function sendTestEmail(): Promise<ActionState> {
     html: emailShell("Test email", "<p style=\"margin:0;font-size:14px;\">If you can read this, order emails are working.</p>"),
     text: "If you can read this, order emails are working.",
   });
-  const settings = `${config.user} via ${config.host}:${config.port}, password ${config.passwordLength} characters, sending to ${config.to}`;
+  const settings =
+    config.provider === "Resend API"
+      ? `Resend API, from ${config.from}, sending to ${config.to}`
+      : `${config.user} via ${config.host}:${config.port}, password ${config.passwordLength} characters, sending to ${config.to}`;
   return result.sent
     ? ok(`Test email sent (${settings}). Check that inbox, including spam.`)
     : fail(`Sending failed: ${result.error ?? "unknown error"} (${settings}).`);

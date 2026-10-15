@@ -57,6 +57,13 @@ requests per day, which took the site down.
 Storefront code must not read `cookies()` or `headers()` (that makes a page dynamic again);
 the age gate is read in the browser instead. The CMS is `force-dynamic`.
 
+## Email
+
+Cloudflare Workers cannot open SMTP sockets to hosts behind Cloudflare (smtp.hostinger.com is one),
+so production email goes through the Resend HTTPS API when `RESEND_API_KEY` is set, from
+`MAIL_FROM` (sales@havensnus.com, domain verified in Resend). Without the key it falls back to SMTP.
+CMS → Settings → Send test email shows the exact result from the live server.
+
 ## Deploy
 
 `npm run deploy` builds with OpenNext and deploys the `havensnus` Worker. Set the same variables
