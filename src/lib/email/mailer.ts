@@ -37,7 +37,7 @@ export async function sendMail(options: {
   const transport = transporter();
   if (!transport) {
     console.warn("Email skipped: SMTP_USER / SMTP_PASS are not set.");
-    return { sent: false };
+    return { sent: false, error: "SMTP_USER / SMTP_PASS are not set on the server." };
   }
 
   try {
@@ -52,8 +52,21 @@ export async function sendMail(options: {
     return { sent: true };
   } catch (error) {
     console.error("sendMail:", error);
-    return { sent: false };
+    return { sent: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+/** Mail settings as the running server sees them, minus the password. */
+export function mailConfigSummary() {
+  const pass = process.env.SMTP_PASS || "";
+  return {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || 465),
+    user: process.env.SMTP_USER || "(not set)",
+    from: fromAddress(),
+    to: staffInbox(),
+    passwordLength: pass.replace(/\s+/g, "").length,
+  };
 }
 
 export function emailShell(title: string, bodyHtml: string) {

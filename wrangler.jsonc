@@ -6,6 +6,8 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   // Keep variables set in the Cloudflare dashboard across deploys.
   "keep_vars": true,
+  // Workers Logs (free plan): shows errors such as failed SMTP sends.
+  "observability": { "enabled": true },
   "workers_dev": true,
   "preview_urls": false,
   "assets": {

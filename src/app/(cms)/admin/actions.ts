@@ -12,7 +12,7 @@ import { expectedSessionToken } from "@/lib/cms/session";
 import { BLOG_STATUSES, CONTACT_STATUSES, ORDER_STATUSES } from "@/lib/cms/constants";
 import { bool, emptyToNull, lines, num, slugFrom, str, type ActionState } from "@/lib/cms/form";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendMail } from "@/lib/email/mailer";
+import { emailShell, mailConfigSummary, sendMail, staffInbox } from "@/lib/email/mailer";
 import { contactStatusEmail, orderStatusEmail } from "@/lib/email/templates";
 
 function adminOrThrow() {
@@ -380,4 +380,20 @@ export async function refreshSiteCache(): Promise<ActionState> {
   await requireCmsSession();
   const { purged } = await purgeStorefrontCache();
   return ok(`Site cache cleared (${purged} cached entries). Pages rebuild with fresh data on their next visit.`);
+}
+
+/** Sends a test email to the admin inbox and reports the exact SMTP result. */
+export async function sendTestEmail(): Promise<ActionState> {
+  await requireCmsSession();
+  const config = mailConfigSummary();
+  const result = await sendMail({
+    to: staffInbox(),
+    subject: "Haven Snus test email",
+    html: emailShell("Test email", "<p style=\"margin:0;font-size:14px;\">If you can read this, order emails are working.</p>"),
+    text: "If you can read this, order emails are working.",
+  });
+  const settings = `${config.user} via ${config.host}:${config.port}, password ${config.passwordLength} characters, sending to ${config.to}`;
+  return result.sent
+    ? ok(`Test email sent (${settings}). Check that inbox, including spam.`)
+    : fail(`Sending failed: ${result.error ?? "unknown error"} (${settings}).`);
 }
