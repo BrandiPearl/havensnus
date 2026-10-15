@@ -37,7 +37,8 @@ async function sendViaResend(options: {
       headers: { Authorization: `Bearer ${resendKey()}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: fromAddress(),
-        to: [options.to],
+        // MAIL_TO may list several admin inboxes, comma-separated.
+        to: options.to.split(",").map((t) => t.trim()).filter(Boolean),
         subject: options.subject,
         html: options.html,
         text: options.text,
